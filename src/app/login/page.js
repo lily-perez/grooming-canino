@@ -1,6 +1,26 @@
-import Link from "next/link";
+import { redirect } from "next/navigation";
+import LoginForm from "@/components/autenticacion/LoginForm";
+import { obtenerUsuarioAutenticado } from "@/server/autenticacion/autorizacion";
 
-export default function LoginPage() {
+export default async function LoginPage({ searchParams }) {
+  const usuario = await obtenerUsuarioAutenticado();
+
+  if (usuario) {
+    redirect(
+      usuario.rol === "administrador"
+        ? "/admin/dashboard"
+        : "/groomer/dashboard",
+    );
+  }
+
+  const parametros = await searchParams;
+  const mensaje =
+    parametros.registro === "exitoso"
+      ? "Cuenta creada correctamente. Ya puedes iniciar sesión."
+      : parametros.mensaje === "sesion-requerida"
+        ? "Debes iniciar sesión para continuar."
+        : null;
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-100 px-4 py-10">
       <section className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm">
@@ -8,15 +28,7 @@ export default function LoginPage() {
           Grooming Canino
         </p>
         <h1 className="mt-2 text-3xl font-bold text-slate-900">Login</h1>
-        <p className="mt-4 text-slate-600">
-          El formulario y la autenticación se implementarán en INC-01.
-        </p>
-        <Link
-          href="/registro"
-          className="mt-6 inline-flex font-medium text-sky-700 hover:text-sky-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700"
-        >
-          Ir a registro
-        </Link>
+        <LoginForm mensaje={mensaje} />
       </section>
     </main>
   );

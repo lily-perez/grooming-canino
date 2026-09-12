@@ -1,6 +1,18 @@
-import Link from "next/link";
+import { redirect } from "next/navigation";
+import RegistroForm from "@/components/autenticacion/RegistroForm";
+import { obtenerUsuarioAutenticado } from "@/server/autenticacion/autorizacion";
 
-export default function RegistroPage() {
+export default async function RegistroPage() {
+  const usuario = await obtenerUsuarioAutenticado();
+
+  if (usuario) {
+    redirect(
+      usuario.rol === "administrador"
+        ? "/admin/dashboard"
+        : "/groomer/dashboard",
+    );
+  }
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-100 px-4 py-10">
       <section className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm">
@@ -8,15 +20,7 @@ export default function RegistroPage() {
           Grooming Canino
         </p>
         <h1 className="mt-2 text-3xl font-bold text-slate-900">Registro</h1>
-        <p className="mt-4 text-slate-600">
-          El formulario y la creación de cuentas se implementarán en INC-01.
-        </p>
-        <Link
-          href="/login"
-          className="mt-6 inline-flex font-medium text-sky-700 hover:text-sky-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700"
-        >
-          Volver a Login
-        </Link>
+        <RegistroForm />
       </section>
     </main>
   );

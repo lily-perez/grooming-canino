@@ -1,10 +1,19 @@
 import EmptyState from "@/components/shared/EmptyState";
-import ErrorMessage from "@/components/shared/ErrorMessage";
-import Loading from "@/components/shared/Loading";
 
-export default function AdminDashboardPage() {
+export default async function AdminDashboardPage({ searchParams }) {
+  const parametros = await searchParams;
+
   return (
     <section className="space-y-6">
+      {parametros.mensaje === "acceso-denegado" ? (
+        <div
+          role="alert"
+          className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-800"
+        >
+          Acceso denegado para la ruta solicitada.
+        </div>
+      ) : null}
+
       <div>
         <p className="text-sm font-semibold uppercase tracking-wide text-sky-700">
           Estructura base
@@ -18,11 +27,7 @@ export default function AdminDashboardPage() {
         </p>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Loading mensaje="Ejemplo de estado de carga." />
-        <ErrorMessage mensaje="Ejemplo de mensaje de error reutilizable." />
-        <EmptyState mensaje="Ejemplo de estado sin resultados." />
-      </div>
+      <EmptyState mensaje="Los indicadores se habilitarán en un incremento posterior." />
     </section>
   );
 }

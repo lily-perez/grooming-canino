@@ -47,6 +47,7 @@ async function solicitar(ruta, opciones = {}) {
 
   try {
     const response = await fetch(ruta, {
+      credentials: "same-origin",
       ...otrasOpciones,
       method,
       headers: headersFinales,

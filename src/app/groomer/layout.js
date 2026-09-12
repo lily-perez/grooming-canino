@@ -1,20 +1,29 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import BotonCerrarSesion from "@/components/autenticacion/BotonCerrarSesion";
+import { obtenerUsuarioAutenticado } from "@/server/autenticacion/autorizacion";
 
-export default function GroomerLayout({ children }) {
+export default async function GroomerLayout({ children }) {
+  const usuario = await obtenerUsuarioAutenticado();
+
+  if (!usuario) {
+    redirect("/login?mensaje=sesion-requerida");
+  }
+
+  if (usuario.rol !== "groomer") {
+    redirect("/admin/dashboard?mensaje=acceso-denegado");
+  }
+
   return (
     <div className="min-h-screen bg-amber-50">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-amber-200 bg-white px-4 py-4 md:px-6">
         <div>
           <p className="font-semibold text-slate-900">Grooming Canino</p>
-          <p className="text-sm text-slate-500">Área de Groomer</p>
+          <p className="text-sm text-slate-500">
+            {usuario.nombre} · Groomer
+          </p>
         </div>
-        <button
-          type="button"
-          disabled
-          className="cursor-not-allowed rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-400"
-        >
-          Cerrar sesión — disponible en INC-01
-        </button>
+        <BotonCerrarSesion />
       </header>
 
       <div className="mx-auto flex max-w-6xl flex-col md:min-h-[calc(100vh-81px)] md:flex-row">
