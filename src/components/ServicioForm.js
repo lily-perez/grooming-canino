@@ -68,7 +68,7 @@ export default function ServicioForm({ onSubmit, servicioInicial, onCancel }) {
           name="nombre"
           value={form.nombre}
           onChange={handleChange}
-          className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/15 transition"
+          className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-600/15 transition"
           placeholder="Baño completo"
         />
         {errores.nombre && <p className="text-rose-600 text-xs">{errores.nombre}</p>}
@@ -80,7 +80,7 @@ export default function ServicioForm({ onSubmit, servicioInicial, onCancel }) {
           name="categoria"
           value={form.categoria}
           onChange={handleChange}
-          className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/15 transition bg-white"
+          className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-600/15 transition bg-white"
         >
           {CATEGORIAS.map((cat) => (
             <option key={cat} value={cat}>{cat}</option>
@@ -96,7 +96,7 @@ export default function ServicioForm({ onSubmit, servicioInicial, onCancel }) {
             type="number"
             value={form.duracion}
             onChange={handleChange}
-            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/15 transition"
+            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-600/15 transition"
           />
           {errores.duracion && <p className="text-rose-600 text-xs">{errores.duracion}</p>}
         </div>
@@ -107,7 +107,7 @@ export default function ServicioForm({ onSubmit, servicioInicial, onCancel }) {
             type="number"
             value={form.precio}
             onChange={handleChange}
-            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/15 transition"
+            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-600/15 transition"
           />
           {errores.precio && <p className="text-rose-600 text-xs">{errores.precio}</p>}
         </div>
@@ -119,7 +119,7 @@ export default function ServicioForm({ onSubmit, servicioInicial, onCancel }) {
           name="groomerAsignado"
           value={form.groomerAsignado}
           onChange={handleChange}
-          className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/15 transition"
+          className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-600/15 transition"
           placeholder="Larris"
         />
         {errores.groomerAsignado && <p className="text-rose-600 text-xs">{errores.groomerAsignado}</p>}
@@ -132,7 +132,7 @@ export default function ServicioForm({ onSubmit, servicioInicial, onCancel }) {
           value={form.descripcion}
           onChange={handleChange}
           rows={2}
-          className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/15 transition resize-none"
+          className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-600/15 transition resize-none"
         />
       </div>
 
@@ -140,7 +140,7 @@ export default function ServicioForm({ onSubmit, servicioInicial, onCancel }) {
         <button type="button" onClick={onCancel} className="px-4 py-2 rounded-lg border border-slate-300 text-sm text-slate-600 hover:bg-slate-50 transition">
           Cancelar
         </button>
-        <button type="submit" className="px-4 py-2 rounded-lg bg-teal-700 text-white text-sm font-medium hover:bg-teal-800 transition">
+        <button type="submit" className="px-4 py-2 rounded-lg bg-sky-700 text-white text-sm font-medium hover:bg-sky-800 transition">
           {servicioInicial ? "Guardar cambios" : "Agregar servicio"}
         </button>
       </div>

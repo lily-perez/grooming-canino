@@ -75,7 +75,7 @@ export default function TareaForm({ servicios, onSubmit, tareaInicial, onCancel 
               name="nombre"
               value={form.nombre}
               onChange={handleChange}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/15 transition"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-600/15 transition"
               placeholder="Cepillar antes del baño"
             />
             {errores.nombre && <p className="text-rose-600 text-xs">{errores.nombre}</p>}
@@ -87,7 +87,7 @@ export default function TareaForm({ servicios, onSubmit, tareaInicial, onCancel 
               name="momento"
               value={form.momento}
               onChange={handleChange}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/15 transition bg-white"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-600/15 transition bg-white"
             >
               {MOMENTOS.map((m) => (
                 <option key={m.value} value={m.value}>{m.label}</option>
@@ -101,7 +101,7 @@ export default function TareaForm({ servicios, onSubmit, tareaInicial, onCancel 
               name="servicioId"
               value={form.servicioId}
               onChange={handleChange}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/15 transition bg-white"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-600/15 transition bg-white"
             >
               <option value="">Selecciona un servicio</option>
               {servicios.map((s) => (
@@ -118,7 +118,7 @@ export default function TareaForm({ servicios, onSubmit, tareaInicial, onCancel 
               value={form.descripcion}
               onChange={handleChange}
               rows={2}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/15 transition resize-none"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-600/15 transition resize-none"
             />
           </div>
 
@@ -126,7 +126,7 @@ export default function TareaForm({ servicios, onSubmit, tareaInicial, onCancel 
             <button type="button" onClick={onCancel} className="px-4 py-2 rounded-lg border border-slate-300 text-sm text-slate-600 hover:bg-slate-50 transition">
               Cancelar
             </button>
-            <button type="submit" className="px-4 py-2 rounded-lg bg-teal-700 text-white text-sm font-medium hover:bg-teal-800 transition">
+            <button type="submit" className="px-4 py-2 rounded-lg bg-sky-700 text-white text-sm font-medium hover:bg-sky-800 transition">
               {tareaInicial ? "Guardar cambios" : "Agregar tarea"}
             </button>
           </div>

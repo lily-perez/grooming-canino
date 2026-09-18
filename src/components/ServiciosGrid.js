@@ -2,7 +2,7 @@
 
 import { IconScissors, IconPencil, IconTrash } from "./icons";
 
-export default function ServiciosGrid({ servicios, onEditar, onEliminar }) {
+export default function ServiciosGrid({ servicios, onEditar, onEliminar, soloLectura }) {
   if (servicios.length === 0) {
     return (
       <div className="bg-white border border-dashed border-slate-300 rounded-2xl p-10 text-center">
@@ -34,30 +34,32 @@ export default function ServiciosGrid({ servicios, onEditar, onEliminar }) {
           </p>
 
           <div className="mt-4 flex items-center justify-between text-sm">
-            <span className="font-semibold text-teal-700">${s.precio}</span>
+            <span className="font-semibold text-sky-700">${s.precio}</span>
             <span className="text-slate-500">{s.groomerAsignado}</span>
           </div>
 
           <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
-            <span className="text-xs px-2 py-0.5 rounded-full bg-teal-50 text-teal-700">
+            <span className="text-xs px-2 py-0.5 rounded-full bg-sky-50 text-sky-700">
               {s.categoria}
             </span>
-            <div className="flex gap-3 opacity-0 group-hover:opacity-100 transition">
-              <button
-                onClick={() => onEditar(s)}
-                aria-label="Editar servicio"
-                className="text-slate-400 hover:text-teal-700"
-              >
-                <IconPencil className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => onEliminar(s.id)}
-                aria-label="Eliminar servicio"
-                className="text-slate-400 hover:text-rose-600"
-              >
-                <IconTrash className="w-4 h-4" />
-              </button>
-            </div>
+            {!soloLectura && (
+              <div className="flex gap-3 opacity-0 group-hover:opacity-100 transition">
+                <button
+                  onClick={() => onEditar(s)}
+                  aria-label="Editar servicio"
+                  className="text-slate-400 hover:text-sky-700"
+                >
+                  <IconPencil className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => onEliminar(s.id)}
+                  aria-label="Eliminar servicio"
+                  className="text-slate-400 hover:text-rose-600"
+                >
+                  <IconTrash className="w-4 h-4" />
+                </button>
+              </div>
+            )}
           </div>
         </div>
       ))}

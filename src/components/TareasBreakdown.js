@@ -7,13 +7,13 @@ const MOMENTO_LABEL = { antes: "Antes", durante: "Durante", despues: "Después" 
 function Avatar({ nombre }) {
   const inicial = nombre ? nombre.trim().charAt(0).toUpperCase() : "?";
   return (
-    <div className="w-6 h-6 rounded-full bg-teal-100 text-teal-700 text-xs font-medium flex items-center justify-center shrink-0">
+    <div className="w-6 h-6 rounded-full bg-teal-100 text-sky-700 text-xs font-medium flex items-center justify-center shrink-0">
       {inicial}
     </div>
   );
 }
 
-export default function TareasBreakdown({ tareas, servicios, onEditar, onEliminar, onToggleCompletada }) {
+export default function TareasBreakdown({ tareas, servicios, onEditar, onEliminar, onToggleCompletada, soloLectura }) {
   if (tareas.length === 0) {
     return (
       <div className="bg-white border border-dashed border-slate-300 rounded-2xl p-10 text-center">
@@ -52,11 +52,12 @@ export default function TareasBreakdown({ tareas, servicios, onEditar, onElimina
 
             <button
               onClick={() => onToggleCompletada(t)}
+              disabled={soloLectura}
               className={`shrink-0 text-xs font-medium px-2.5 py-1 rounded-full transition ${
                 t.completada
                   ? "bg-emerald-50 text-emerald-700"
                   : "bg-amber-50 text-amber-700"
-              }`}
+              } ${soloLectura ? "cursor-default" : ""}`}
             >
               <span className="inline-flex items-center gap-1">
                 {t.completada && <IconCheck className="w-3 h-3" />}
@@ -64,14 +65,16 @@ export default function TareasBreakdown({ tareas, servicios, onEditar, onElimina
               </span>
             </button>
 
-            <div className="hidden sm:flex gap-3 opacity-0 group-hover:opacity-100 transition shrink-0">
-              <button onClick={() => onEditar(t)} aria-label="Editar tarea" className="text-slate-400 hover:text-teal-700">
-                <IconPencil className="w-4 h-4" />
-              </button>
-              <button onClick={() => onEliminar(t.id)} aria-label="Eliminar tarea" className="text-slate-400 hover:text-rose-600">
-                <IconTrash className="w-4 h-4" />
-              </button>
-            </div>
+            {!soloLectura && (
+              <div className="hidden sm:flex gap-3 opacity-0 group-hover:opacity-100 transition shrink-0">
+                <button onClick={() => onEditar(t)} aria-label="Editar tarea" className="text-slate-400 hover:text-sky-700">
+                  <IconPencil className="w-4 h-4" />
+                </button>
+                <button onClick={() => onEliminar(t.id)} aria-label="Eliminar tarea" className="text-slate-400 hover:text-rose-600">
+                  <IconTrash className="w-4 h-4" />
+                </button>
+              </div>
+            )}
           </div>
         );
       })}
