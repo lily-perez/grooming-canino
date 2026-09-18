@@ -3,13 +3,12 @@ import BotonCerrarSesion from "@/components/autenticacion/BotonCerrarSesion";
 import NavLink from "@/components/shared/NavLink";
 import { obtenerUsuarioAutenticado } from "@/server/autenticacion/autorizacion";
 
+// 1. Sacamos Historial y Reportes de los pendientes
 const modulosPendientes = [
   "Citas",
   "Clientes",
   "Perros",
   "Groomers",
-  "Historial",
-  "Reportes",
 ];
 
 const ACTIVO = "block rounded-lg bg-sky-700 px-3 py-2 font-medium text-white";
@@ -50,6 +49,14 @@ export default async function AdminLayout({ children }) {
             <NavLink href="/admin/servicios" activeClassName={ACTIVO} idleClassName={INACTIVO}>
               Servicios
             </NavLink>
+            
+            <NavLink href="/admin/historial" activeClassName={ACTIVO} idleClassName={INACTIVO}>
+              Historial
+            </NavLink>
+            <NavLink href="/admin/reportes" activeClassName={ACTIVO} idleClassName={INACTIVO}>
+              Reportes
+            </NavLink>
+            
             {modulosPendientes.map((modulo) => (
               <button
                 key={modulo}
