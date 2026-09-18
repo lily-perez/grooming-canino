@@ -1,17 +1,19 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import BotonCerrarSesion from "@/components/autenticacion/BotonCerrarSesion";
+import NavLink from "@/components/shared/NavLink";
 import { obtenerUsuarioAutenticado } from "@/server/autenticacion/autorizacion";
 
 const modulosPendientes = [
   "Citas",
   "Clientes",
   "Perros",
-  "Servicios",
   "Groomers",
   "Historial",
   "Reportes",
 ];
+
+const ACTIVO = "block rounded-lg bg-sky-700 px-3 py-2 font-medium text-white";
+const INACTIVO = "block rounded-lg px-3 py-2 font-medium text-slate-700 hover:bg-slate-100";
 
 export default async function AdminLayout({ children }) {
   const usuario = await obtenerUsuarioAutenticado();
@@ -39,18 +41,15 @@ export default async function AdminLayout({ children }) {
       <div className="mx-auto flex max-w-7xl flex-col md:min-h-[calc(100vh-81px)] md:flex-row">
         <aside className="border-b border-slate-200 bg-white p-4 md:w-64 md:border-r md:border-b-0">
           <nav aria-label="Navegación de Administrador" className="space-y-2">
-            <Link
-              href="/admin/dashboard"
-              className="block rounded-lg bg-sky-700 px-3 py-2 font-medium text-white"
-            >
+            <NavLink href="/admin/dashboard" activeClassName={ACTIVO} idleClassName={INACTIVO}>
               Dashboard
-            </Link>
-            <Link
-              href="/admin/usuarios"
-              className="block rounded-lg px-3 py-2 font-medium text-slate-700 hover:bg-slate-100"
-            >
+            </NavLink>
+            <NavLink href="/admin/usuarios" activeClassName={ACTIVO} idleClassName={INACTIVO}>
               Usuarios
-            </Link>
+            </NavLink>
+            <NavLink href="/admin/servicios" activeClassName={ACTIVO} idleClassName={INACTIVO}>
+              Servicios
+            </NavLink>
             {modulosPendientes.map((modulo) => (
               <button
                 key={modulo}
