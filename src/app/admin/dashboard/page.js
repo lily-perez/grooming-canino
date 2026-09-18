@@ -1,33 +1,43 @@
-import EmptyState from "@/components/shared/EmptyState";
-
-export default async function AdminDashboardPage({ searchParams }) {
-  const parametros = await searchParams;
+export default function DashboardAdmin() {
+  const metricas = {
+    citasHoy: 8,
+    pendientes: 3,
+    completadas: 5,
+    tareasActivas: 12
+  };
 
   return (
-    <section className="space-y-6">
-      {parametros.mensaje === "acceso-denegado" ? (
-        <div
-          role="alert"
-          className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-800"
-        >
-          Acceso denegado para la ruta solicitada.
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-6 text-gray-800">Dashboard Administrativo</h1>
+      
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div className="bg-white p-4 rounded-lg shadow border-l-4 border-blue-500">
+          <p className="text-gray-500 text-sm font-medium">Citas de Hoy</p>
+          <p className="text-3xl font-bold text-gray-800">{metricas.citasHoy}</p>
         </div>
-      ) : null}
-
-      <div>
-        <p className="text-sm font-semibold uppercase tracking-wide text-sky-700">
-          Estructura base
-        </p>
-        <h1 className="mt-1 text-3xl font-bold text-slate-900">
-          Dashboard de Administrador
-        </h1>
-        <p className="mt-2 text-slate-600">
-          Los indicadores y datos operativos se implementarán en incrementos
-          posteriores.
-        </p>
+        
+        <div className="bg-white p-4 rounded-lg shadow border-l-4 border-yellow-500">
+          <p className="text-gray-500 text-sm font-medium">Pendientes</p>
+          <p className="text-3xl font-bold text-gray-800">{metricas.pendientes}</p>
+        </div>
+        
+        <div className="bg-white p-4 rounded-lg shadow border-l-4 border-green-500">
+          <p className="text-gray-500 text-sm font-medium">Completadas</p>
+          <p className="text-3xl font-bold text-gray-800">{metricas.completadas}</p>
+        </div>
+        
+        <div className="bg-white p-4 rounded-lg shadow border-l-4 border-purple-500">
+          <p className="text-gray-500 text-sm font-medium">Tareas Pendientes</p>
+          <p className="text-3xl font-bold text-gray-800">{metricas.tareasActivas}</p>
+        </div>
       </div>
 
-      <EmptyState mensaje="Los indicadores se habilitarán en un incremento posterior." />
-    </section>
+      <div className="bg-white p-6 rounded-lg shadow">
+        <h2 className="text-xl font-semibold mb-4 text-gray-800">Próximas Citas</h2>
+        <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded p-8 text-center">
+          <p className="text-gray-500">Aquí construiremos la tabla de citas en el siguiente paso.</p>
+        </div>
+      </div>
+    </div>
   );
 }
