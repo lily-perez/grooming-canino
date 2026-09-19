@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useCitas } from "@/hooks/useCitas";
 import { useServicios } from "@/context/ServiciosContext";
 import ServicioForm from "@/components/ServicioForm";
 import TareaForm from "@/components/TareaForm";
@@ -27,6 +28,7 @@ export default function ServiciosPageContent() {
     editarTarea,
     cambiarEstadoTarea,
   } = useServicios();
+  const { citas } = useCitas();
 
   const [tab, setTab] = useState("servicios");
   const [busqueda, setBusqueda] = useState("");
@@ -247,6 +249,7 @@ export default function ServiciosPageContent() {
             <TareaForm
               key={tareaEnEdicion?.id || "nueva-tarea"}
               servicios={servicios.filter((servicio) => servicio.activo)}
+              citas={citas}
               onSubmit={handleSubmitTarea}
               tareaInicial={tareaEnEdicion}
               onCancel={() => setModalTareaAbierto(false)}

@@ -2,10 +2,16 @@ import {
   listarCitasPersistidas,
   obtenerCitaPersistida,
 } from "@/server/persistencia/citasAdapter";
+import { listarHorariosPersistidos } from "@/server/persistencia/horariosAdapter";
 import { obtenerServicioPersistido } from "@/server/persistencia/serviciosAdapter";
 import { listarTareasPersistidas } from "@/server/persistencia/tareasAdapter";
 import { obtenerUsuarioPersistido } from "@/server/persistencia/usuariosAdapter";
+import {
+  groomerCubreHorarioLaboral,
+  validarDisponibilidadGroomer,
+} from "@/server/reglas/disponibilidad";
 import { crearErrorServidor } from "@/server/respuestas";
+import { extraerServicioIds } from "@/utils/validacionesCitas";
 import { haySolapamientoTarea } from "@/utils/validacionesServiciosTareas";
 
 export async function validarRelacionesTarea(datos, idExcluir = null) {
@@ -20,6 +26,14 @@ export async function validarRelacionesTarea(datos, idExcluir = null) {
       "CITA_NO_ENCONTRADA",
       "La cita indicada no existe.",
       404,
+    );
+  }
+
+  if (cita.estado === "cancelada" || cita.estado === "completada") {
+    throw crearErrorServidor(
+      "ESTADO_INVALIDO",
+      "No se pueden crear ni editar tareas de una cita cancelada o completada.",
+      409,
     );
   }
 
@@ -39,9 +53,7 @@ export async function validarRelacionesTarea(datos, idExcluir = null) {
     );
   }
 
-  const serviciosCita = Array.isArray(cita.servicioIds)
-    ? cita.servicioIds
-    : [cita.servicioId].filter(Boolean);
+  const serviciosCita = extraerServicioIds(cita);
 
   if (
     !serviciosCita.some(
@@ -63,6 +75,24 @@ export async function validarRelacionesTarea(datos, idExcluir = null) {
     );
   }
 
+  const horarios = await listarHorariosPersistidos();
+
+  if (
+    !groomerCubreHorarioLaboral(
+      horarios,
+      datos.groomerId,
+      cita.fecha,
+      datos.horaInicio,
+      datos.horaFin,
+    )
+  ) {
+    throw crearErrorServidor(
+      "GROOMER_NO_DISPONIBLE",
+      "El horario de la tarea queda fuera del horario laboral activo del Groomer.",
+      409,
+    );
+  }
+
   const [tareas, citas] = await Promise.all([
     listarTareasPersistidas(),
     listarCitasPersistidas(),
@@ -72,6 +102,22 @@ export async function validarRelacionesTarea(datos, idExcluir = null) {
     throw crearErrorServidor(
       "HORARIO_SOLAPADO",
       "El Groomer ya tiene una tarea asignada en ese horario.",
+      409,
+    );
+  }
+
+  const disponible = await validarDisponibilidadGroomer(
+    datos.groomerId,
+    cita.fecha,
+    datos.horaInicio,
+    datos.horaFin,
+    idExcluir,
+  );
+
+  if (!disponible) {
+    throw crearErrorServidor(
+      "GROOMER_NO_DISPONIBLE",
+      "El Groomer no está disponible en el horario solicitado.",
       409,
     );
   }

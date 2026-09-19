@@ -1,29 +1,42 @@
-import { requerirRol } from "@/server/autenticacion/autorizacion";
+import {
+  requerirRol,
+  requerirUsuarioAutenticado,
+} from "@/server/autenticacion/autorizacion";
 import {
   actualizarCitaPersistida,
-  eliminarCitaPersistida,
-  listarCitasPersistidas,
   obtenerCitaPersistida,
 } from "@/server/persistencia/citasAdapter";
+import { listarTareasPersistidas } from "@/server/persistencia/tareasAdapter";
+import {
+  citaRelacionadaConGroomer,
+  completarDatosCita,
+} from "@/server/reglas/validarCita";
 import {
   crearErrorServidor,
   leerJson,
   respuestaError,
 } from "@/server/respuestas";
-import {
-  hayCruceHorario,
-  tieneErroresCita,
-  validarCita,
-} from "@/utils/validacionesCitas";
+import { tieneErroresCita, validarCita } from "@/utils/validacionesCitas";
 
-export async function GET(request, { params }) {
-  try {
-    await requerirRol("administrador");
+async function obtenerCitaAutorizada(id, usuario) {
+  const cita = await obtenerCitaPersistida(id);
 
-    const { id } = await params;
-    const cita = await obtenerCitaPersistida(id);
+  if (!cita) {
+    throw crearErrorServidor(
+      "CITA_NO_ENCONTRADA",
+      "La cita solicitada no existe.",
+      404,
+    );
+  }
 
-    if (!cita) {
+  if (usuario.rol === "administrador") {
+    return cita;
+  }
+
+  if (usuario.rol === "groomer") {
+    const tareas = await listarTareasPersistidas();
+
+    if (!citaRelacionadaConGroomer(cita, tareas, usuario.id)) {
       throw crearErrorServidor(
         "CITA_NO_ENCONTRADA",
         "La cita solicitada no existe.",
@@ -31,9 +44,23 @@ export async function GET(request, { params }) {
       );
     }
 
-    return Response.json({
-      data: cita,
-    });
+    return cita;
+  }
+
+  throw crearErrorServidor(
+    "ACCESO_DENEGADO",
+    "No tienes permiso para consultar esta cita.",
+    403,
+  );
+}
+
+export async function GET(request, { params }) {
+  try {
+    const usuario = await requerirUsuarioAutenticado();
+    const { id } = await params;
+    const cita = await obtenerCitaAutorizada(id, usuario);
+
+    return Response.json({ data: cita });
   } catch (error) {
     return respuestaError(error);
   }
@@ -42,7 +69,6 @@ export async function GET(request, { params }) {
 export async function PUT(request, { params }) {
   try {
     await requerirRol("administrador");
-
     const { id } = await params;
     const citaActual = await obtenerCitaPersistida(id);
 
@@ -51,6 +77,14 @@ export async function PUT(request, { params }) {
         "CITA_NO_ENCONTRADA",
         "La cita solicitada no existe.",
         404,
+      );
+    }
+
+    if (citaActual.estado !== "programada") {
+      throw crearErrorServidor(
+        "ESTADO_INVALIDO",
+        "Solo pueden editarse citas programadas.",
+        409,
       );
     }
 
@@ -66,47 +100,12 @@ export async function PUT(request, { params }) {
       );
     }
 
-    const citas = await listarCitasPersistidas();
-
-    if (hayCruceHorario(citas, datos, id)) {
-      throw crearErrorServidor(
-        "HORARIO_NO_DISPONIBLE",
-        "El groomer ya tiene una cita programada en ese horario.",
-        409,
-      );
-    }
-
-    const cita = await actualizarCitaPersistida(id, datos);
+    const citaCompleta = await completarDatosCita(datos);
+    const cita = await actualizarCitaPersistida(id, citaCompleta);
 
     return Response.json({
       data: cita,
       mensaje: "Cita actualizada correctamente.",
-    });
-  } catch (error) {
-    return respuestaError(error);
-  }
-}
-
-export async function DELETE(request, { params }) {
-  try {
-    await requerirRol("administrador");
-
-    const { id } = await params;
-    const cita = await obtenerCitaPersistida(id);
-
-    if (!cita) {
-      throw crearErrorServidor(
-        "CITA_NO_ENCONTRADA",
-        "La cita solicitada no existe.",
-        404,
-      );
-    }
-
-    await eliminarCitaPersistida(id);
-
-    return Response.json({
-      data: null,
-      mensaje: "Cita eliminada correctamente.",
     });
   } catch (error) {
     return respuestaError(error);
