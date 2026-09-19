@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useServicios } from "@/context/ServiciosContext";
 import ServicioForm from "@/components/ServicioForm";
@@ -21,11 +21,10 @@ export default function ServiciosPageContent() {
     error,
     agregarServicio,
     editarServicio,
-    eliminarServicio,
+    cambiarEstadoServicio,
     agregarTarea,
     editarTarea,
-    eliminarTarea,
-    toggleTareaCompletada,
+    cambiarEstadoTarea,
   } = useServicios();
 
   const [tab, setTab] = useState("servicios");
@@ -36,28 +35,13 @@ export default function ServiciosPageContent() {
   const [modalServicioAbierto, setModalServicioAbierto] = useState(false);
   const [modalTareaAbierto, setModalTareaAbierto] = useState(false);
 
-  useEffect(() => {
-    if (servicioEnEdicion && !servicios.find((s) => s.id === servicioEnEdicion.id)) {
-      setServicioEnEdicion(null);
-      setModalServicioAbierto(false);
-    }
-  }, [servicios, servicioEnEdicion]);
-
-  useEffect(() => {
-    if (tareaEnEdicion && !tareas.find((t) => t.id === tareaEnEdicion.id)) {
-      setTareaEnEdicion(null);
-      setModalTareaAbierto(false);
-    }
-  }, [tareas, tareaEnEdicion]);
-
   const serviciosFiltrados = useMemo(() => {
     const q = busqueda.trim().toLowerCase();
     if (!q) return servicios;
     return servicios.filter(
       (s) =>
         s.nombre.toLowerCase().includes(q) ||
-        s.categoria.toLowerCase().includes(q) ||
-        (s.groomerAsignado || "").toLowerCase().includes(q)
+        (s.descripcion || "").toLowerCase().includes(q),
     );
   }, [servicios, busqueda]);
 
@@ -80,20 +64,21 @@ export default function ServiciosPageContent() {
   }
 
   async function handleSubmitServicio(data) {
-    if (!esAdmin) return;
-    if (servicioEnEdicion) {
-      await editarServicio(servicioEnEdicion.id, data);
-    } else {
-      await agregarServicio(data);
-    }
+    if (!esAdmin) return false;
+    const guardado = servicioEnEdicion
+      ? await editarServicio(servicioEnEdicion.id, data)
+      : await agregarServicio(data);
+    if (!guardado) return false;
     setModalServicioAbierto(false);
     setServicioEnEdicion(null);
+    return true;
   }
 
-  async function handleEliminarServicio(id) {
+  async function handleCambiarEstadoServicio(servicio) {
     if (!esAdmin) return;
-    if (confirm("¿Eliminar este servicio? Esta acción no se puede deshacer.")) {
-      await eliminarServicio(id);
+    const accion = servicio.activo ? "desactivar" : "activar";
+    if (confirm(`¿Deseas ${accion} este servicio?`)) {
+      await cambiarEstadoServicio(servicio.id, !servicio.activo);
     }
   }
 
@@ -110,38 +95,24 @@ export default function ServiciosPageContent() {
   }
 
   async function handleSubmitTarea(data) {
-    if (!esAdmin) return;
-    if (tareaEnEdicion) {
-      await editarTarea(tareaEnEdicion.id, data);
-    } else {
-      await agregarTarea(data);
-    }
+    if (!esAdmin) return false;
+    const guardada = tareaEnEdicion
+      ? await editarTarea(tareaEnEdicion.id, data)
+      : await agregarTarea(data);
+    if (!guardada) return false;
     setModalTareaAbierto(false);
     setTareaEnEdicion(null);
+    return true;
   }
 
-  async function handleEliminarTarea(id) {
-    if (!esAdmin) return;
-    if (confirm("¿Eliminar esta tarea? Esta acción no se puede deshacer.")) {
-      await eliminarTarea(id);
-    }
-  }
-
-  async function handleToggleCompletada(tarea) {
-    if (!esAdmin) return;
-    await toggleTareaCompletada(tarea);
+  async function handleCambiarEstadoTarea(tarea) {
+    const estado =
+      tarea.estado === "pendiente" ? "en_proceso" : "completada";
+    await cambiarEstadoTarea(tarea.id, estado);
   }
 
   if (loading) {
     return <p className="text-slate-500">Cargando servicios y tareas...</p>;
-  }
-
-  if (error) {
-    return (
-      <div className="bg-rose-50 border border-rose-200 text-rose-700 px-5 py-4 rounded-xl max-w-md">
-        {error}
-      </div>
-    );
   }
 
   return (
@@ -153,10 +124,16 @@ export default function ServiciosPageContent() {
         <h1 className="text-2xl font-semibold text-slate-900 mt-1">Servicios y tareas</h1>
         <p className="text-sm text-slate-500 mt-1 max-w-lg">
           {esAdmin
-            ? "Administra el catálogo de servicios y las tareas asociadas a cada uno."
-            : "Consulta el catálogo de servicios y las tareas asociadas a cada uno."}
+            ? "Administra el catálogo de servicios y las tareas operativas."
+            : "Consulta el catálogo y tus tareas asignadas."}
         </p>
       </div>
+
+      {error && (
+        <div className="bg-rose-50 border border-rose-200 text-rose-700 px-5 py-4 rounded-xl max-w-xl">
+          {error}
+        </div>
+      )}
 
       {!esAdmin && (
         <div className="bg-sky-50 border border-sky-200 text-sky-700 text-sm rounded-xl px-4 py-2.5">
@@ -194,7 +171,7 @@ export default function ServiciosPageContent() {
                 : "border-transparent text-slate-400 hover:text-slate-600"
             }`}
           >
-            Tareas en progreso
+            Tareas
           </button>
         </div>
 
@@ -213,22 +190,22 @@ export default function ServiciosPageContent() {
         <ServiciosGrid
           servicios={serviciosFiltrados}
           onEditar={abrirEditarServicio}
-          onEliminar={handleEliminarServicio}
+          onCambiarEstado={handleCambiarEstadoServicio}
           soloLectura={!esAdmin}
         />
       ) : (
         <div>
           <h2 className="text-base font-semibold text-slate-800 mb-1">Desglose de tareas</h2>
           <p className="text-sm text-slate-400 mb-4">
-            Subtareas asociadas a cada servicio, agrupadas por momento de la cita.
+            Tareas operativas asociadas a una cita, un servicio y un Groomer.
           </p>
           <TareasBreakdown
             tareas={tareasFiltradas}
             servicios={servicios}
             onEditar={abrirEditarTarea}
-            onEliminar={handleEliminarTarea}
-            onToggleCompletada={handleToggleCompletada}
-            soloLectura={!esAdmin}
+            onCambiarEstado={handleCambiarEstadoTarea}
+            puedeEditar={esAdmin}
+            puedeCambiarEstado
           />
         </div>
       )}
@@ -237,6 +214,7 @@ export default function ServiciosPageContent() {
         <>
           <Modal open={modalServicioAbierto} onClose={() => setModalServicioAbierto(false)}>
             <ServicioForm
+              key={servicioEnEdicion?.id || "nuevo-servicio"}
               onSubmit={handleSubmitServicio}
               servicioInicial={servicioEnEdicion}
               onCancel={() => setModalServicioAbierto(false)}
@@ -245,7 +223,8 @@ export default function ServiciosPageContent() {
 
           <Modal open={modalTareaAbierto} onClose={() => setModalTareaAbierto(false)}>
             <TareaForm
-              servicios={servicios}
+              key={tareaEnEdicion?.id || "nueva-tarea"}
+              servicios={servicios.filter((servicio) => servicio.activo)}
               onSubmit={handleSubmitTarea}
               tareaInicial={tareaEnEdicion}
               onCancel={() => setModalTareaAbierto(false)}

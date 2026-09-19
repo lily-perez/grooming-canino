@@ -36,15 +36,8 @@ export default async function GroomerLayout({ children }) {
               Dashboard
             </NavLink>
             <NavLink href="/groomer/servicios" activeClassName={ACTIVO} idleClassName={INACTIVO}>
-              Servicios
+              Servicios y mis tareas
             </NavLink>
-            <button
-              type="button"
-              disabled
-              className="block w-full cursor-not-allowed rounded-lg px-3 py-2 text-left text-slate-400"
-            >
-              Mis tareas
-            </button>
           </nav>
         </aside>
 

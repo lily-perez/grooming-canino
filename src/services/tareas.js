@@ -1,10 +1,13 @@
 import { apiClient } from "./apiClient";
-import { API_BASE } from "./api";
 
-const URL = `${API_BASE}/tareas`;
+const URL = "/api/tareas";
 
 export function getTareas() {
   return apiClient.get(URL);
+}
+
+export function getMisTareas() {
+  return apiClient.get(`${URL}/mias`);
 }
 
 export function createTarea(data) {
@@ -15,6 +18,6 @@ export function updateTarea(id, data) {
   return apiClient.put(`${URL}/${id}`, data);
 }
 
-export function deleteTarea(id) {
-  return apiClient.delete(`${URL}/${id}`);
+export function cambiarEstadoTarea(id, estado) {
+  return apiClient.patch(`${URL}/${id}/estado`, { estado });
 }

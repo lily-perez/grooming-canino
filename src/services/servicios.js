@@ -1,7 +1,6 @@
 import { apiClient } from "./apiClient";
-import { API_BASE } from "./api";
 
-const URL = `${API_BASE}/Servicios`;
+const URL = "/api/servicios";
 
 export function getServicios() {
   return apiClient.get(URL);
@@ -15,6 +14,6 @@ export function updateServicio(id, data) {
   return apiClient.put(`${URL}/${id}`, data);
 }
 
-export function deleteServicio(id) {
-  return apiClient.delete(`${URL}/${id}`);
+export function cambiarEstadoServicio(id, activo) {
+  return apiClient.patch(`${URL}/${id}/estado`, { activo });
 }

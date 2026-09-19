@@ -1,29 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
-const MOMENTOS = [
-  { value: "antes", label: "Antes de la cita" },
-  { value: "durante", label: "Durante la cita" },
-  { value: "despues", label: "Después de la cita" },
-];
+import { useState } from "react";
 
 const initialState = {
-  nombre: "",
-  momento: MOMENTOS[0].value,
+  citaId: "",
   servicioId: "",
-  descripcion: "",
-  completada: false,
+  nombre: "",
+  groomerId: "",
+  horaInicio: "",
+  horaFin: "",
+  observaciones: "",
 };
 
 export default function TareaForm({ servicios, onSubmit, tareaInicial, onCancel }) {
-  const [form, setForm] = useState(tareaInicial || initialState);
+  const [form, setForm] = useState(() => ({
+    ...initialState,
+    ...tareaInicial,
+  }));
   const [errores, setErrores] = useState({});
-
-  useEffect(() => {
-    setForm(tareaInicial || initialState);
-    setErrores({});
-  }, [tareaInicial]);
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -32,17 +26,25 @@ export default function TareaForm({ servicios, onSubmit, tareaInicial, onCancel 
 
   function validar() {
     const nuevosErrores = {};
+    if (!form.citaId.trim()) nuevosErrores.citaId = "La cita es obligatoria";
     if (!form.nombre.trim()) nuevosErrores.nombre = "El nombre es obligatorio";
     if (!form.servicioId) nuevosErrores.servicioId = "Selecciona un servicio";
+    if (!form.groomerId.trim())
+      nuevosErrores.groomerId = "El Groomer es obligatorio";
+    if (!form.horaInicio) nuevosErrores.horaInicio = "Indica la hora de inicio";
+    if (!form.horaFin) nuevosErrores.horaFin = "Indica la hora de finalización";
+    if (form.horaInicio && form.horaFin && form.horaFin <= form.horaInicio) {
+      nuevosErrores.horaFin = "La hora final debe ser posterior a la inicial";
+    }
     setErrores(nuevosErrores);
     return Object.keys(nuevosErrores).length === 0;
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     if (!validar()) return;
-    onSubmit(form);
-    if (!tareaInicial) setForm(initialState);
+    const guardada = await onSubmit(form);
+    if (guardada && !tareaInicial) setForm(initialState);
   }
 
   return (
@@ -52,7 +54,7 @@ export default function TareaForm({ servicios, onSubmit, tareaInicial, onCancel 
           {tareaInicial ? "Editar tarea" : "Nueva tarea"}
         </h2>
         <p className="text-sm text-slate-400 mt-0.5">
-          {tareaInicial ? "Actualiza los datos y guarda los cambios." : "Asócialo a un servicio y define cuándo se realiza."}
+          {tareaInicial ? "Actualiza los datos y guarda los cambios." : "Asocia la tarea con una cita, un servicio y un Groomer."}
         </p>
       </div>
 
@@ -82,17 +84,15 @@ export default function TareaForm({ servicios, onSubmit, tareaInicial, onCancel 
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-slate-600">Momento</label>
-            <select
-              name="momento"
-              value={form.momento}
+            <label className="text-sm font-medium text-slate-600">ID de la cita</label>
+            <input
+              name="citaId"
+              value={form.citaId}
               onChange={handleChange}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-600/15 transition bg-white"
-            >
-              {MOMENTOS.map((m) => (
-                <option key={m.value} value={m.value}>{m.label}</option>
-              ))}
-            </select>
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-600/15 transition"
+              placeholder="ID de una cita existente"
+            />
+            {errores.citaId && <p className="text-rose-600 text-xs">{errores.citaId}</p>}
           </div>
 
           <div className="flex flex-col gap-1.5">
@@ -112,10 +112,47 @@ export default function TareaForm({ servicios, onSubmit, tareaInicial, onCancel 
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-slate-600">Descripción</label>
+            <label className="text-sm font-medium text-slate-600">ID del Groomer</label>
+            <input
+              name="groomerId"
+              value={form.groomerId}
+              onChange={handleChange}
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-600/15 transition"
+              placeholder="ID de un Usuario Groomer activo"
+            />
+            {errores.groomerId && <p className="text-rose-600 text-xs">{errores.groomerId}</p>}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-slate-600">Hora de inicio</label>
+              <input
+                name="horaInicio"
+                type="time"
+                value={form.horaInicio}
+                onChange={handleChange}
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-600/15 transition"
+              />
+              {errores.horaInicio && <p className="text-rose-600 text-xs">{errores.horaInicio}</p>}
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-slate-600">Hora de finalización</label>
+              <input
+                name="horaFin"
+                type="time"
+                value={form.horaFin}
+                onChange={handleChange}
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-600/15 transition"
+              />
+              {errores.horaFin && <p className="text-rose-600 text-xs">{errores.horaFin}</p>}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium text-slate-600">Observaciones</label>
             <textarea
-              name="descripcion"
-              value={form.descripcion}
+              name="observaciones"
+              value={form.observaciones}
               onChange={handleChange}
               rows={2}
               className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-600/15 transition resize-none"
