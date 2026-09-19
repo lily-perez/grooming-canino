@@ -103,18 +103,15 @@ export function validarTransicionTarea(estadoActual, estadoNuevo) {
   );
 }
 
-export function haySolapamientoTarea(
+export function haySolapamientoTareaEnFecha(
   tareas,
   citas,
-  nuevaTarea,
+  { groomerId, fecha, horaInicio, horaFin },
   idExcluir = null,
 ) {
-  const citasPorId = new Map(
-    citas.map((cita) => [String(cita.id), cita]),
-  );
-  const nuevaCita = citasPorId.get(String(nuevaTarea.citaId));
+  const citasPorId = new Map(citas.map((cita) => [String(cita.id), cita]));
 
-  if (!nuevaCita?.fecha) {
+  if (!fecha) {
     return false;
   }
 
@@ -130,10 +127,32 @@ export function haySolapamientoTarea(
     }
 
     return (
-      String(tarea.groomerId) === String(nuevaTarea.groomerId) &&
-      cita.fecha === nuevaCita.fecha &&
-      nuevaTarea.horaInicio < tarea.horaFin &&
-      nuevaTarea.horaFin > tarea.horaInicio
+      String(tarea.groomerId) === String(groomerId) &&
+      cita.fecha === fecha &&
+      horaInicio < tarea.horaFin &&
+      horaFin > tarea.horaInicio
     );
   });
+}
+
+export function haySolapamientoTarea(
+  tareas,
+  citas,
+  nuevaTarea,
+  idExcluir = null,
+) {
+  const citasPorId = new Map(citas.map((cita) => [String(cita.id), cita]));
+  const nuevaCita = citasPorId.get(String(nuevaTarea.citaId));
+
+  return haySolapamientoTareaEnFecha(
+    tareas,
+    citas,
+    {
+      groomerId: nuevaTarea.groomerId,
+      fecha: nuevaCita?.fecha,
+      horaInicio: nuevaTarea.horaInicio,
+      horaFin: nuevaTarea.horaFin,
+    },
+    idExcluir,
+  );
 }

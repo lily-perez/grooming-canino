@@ -4,10 +4,8 @@ import NavLink from "@/components/shared/NavLink";
 import { obtenerUsuarioAutenticado } from "@/server/autenticacion/autorizacion";
 
 const modulosPendientes = [
-  "Citas",
   "Clientes",
   "Perros",
-  "Groomers",
   "Historial",
   "Reportes",
 ];
@@ -49,6 +47,12 @@ export default async function AdminLayout({ children }) {
             </NavLink>
             <NavLink href="/admin/servicios" activeClassName={ACTIVO} idleClassName={INACTIVO}>
               Servicios
+            </NavLink>
+            <NavLink href="/admin/citas" activeClassName={ACTIVO} idleClassName={INACTIVO}>
+              Citas
+            </NavLink>
+            <NavLink href="/admin/groomers" activeClassName={ACTIVO} idleClassName={INACTIVO}>
+              Groomers
             </NavLink>
             {modulosPendientes.map((modulo) => (
               <button
