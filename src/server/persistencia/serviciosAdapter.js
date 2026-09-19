@@ -1,7 +1,7 @@
 import { solicitarMockApi } from "@/server/persistencia/mockApiClient";
 
-// El recurso existente usa mayúscula. La diferencia queda encapsulada aquí.
-const RECURSO_SERVICIOS = "/Servicios";
+// El recurso de la base privada fue verificado con este casing.
+const RECURSO_SERVICIOS = "/servicios";
 
 export function normalizarServicioPersistido(servicio) {
   if (!servicio) {

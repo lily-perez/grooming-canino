@@ -63,7 +63,12 @@ export function ServiciosProvider({ children }) {
     const nuevo = await ejecutarOperacion(() =>
       serviciosRepository.crear(data),
     );
-    if (!nuevo) return false;
+    if (!nuevo?.id) {
+      if (nuevo) {
+        setError("La API no devolvió el servicio creado correctamente.");
+      }
+      return false;
+    }
     setServicios((prev) => [...prev, nuevo]);
     return true;
   }
@@ -118,6 +123,7 @@ export function ServiciosProvider({ children }) {
         tareas,
         loading,
         error,
+        limpiarError: () => setError(null),
         agregarServicio,
         editarServicio,
         cambiarEstadoServicio,

@@ -8,7 +8,13 @@ const initialState = {
   descripcion: "",
 };
 
-export default function ServicioForm({ onSubmit, servicioInicial, onCancel }) {
+export default function ServicioForm({
+  onSubmit,
+  servicioInicial,
+  onCancel,
+  enviando = false,
+  errorServidor = null,
+}) {
   const [form, setForm] = useState(() => ({
     ...initialState,
     ...servicioInicial,
@@ -36,7 +42,7 @@ export default function ServicioForm({ onSubmit, servicioInicial, onCancel }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!validar()) return;
+    if (enviando || !validar()) return;
     const guardado = await onSubmit({
       ...form,
       duracionEstimadaMinutos: Number(form.duracionEstimadaMinutos),
@@ -55,12 +61,22 @@ export default function ServicioForm({ onSubmit, servicioInicial, onCancel }) {
         </p>
       </div>
 
+      {errorServidor && (
+        <p
+          role="alert"
+          className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700"
+        >
+          {errorServidor}
+        </p>
+      )}
+
       <div className="flex flex-col gap-1.5">
         <label className="text-sm font-medium text-slate-600">Nombre</label>
         <input
           name="nombre"
           value={form.nombre}
           onChange={handleChange}
+          disabled={enviando}
           className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-600/15 transition"
           placeholder="Baño completo"
         />
@@ -75,6 +91,7 @@ export default function ServicioForm({ onSubmit, servicioInicial, onCancel }) {
           min="1"
           value={form.duracionEstimadaMinutos}
           onChange={handleChange}
+          disabled={enviando}
           className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-600/15 transition"
         />
         {errores.duracionEstimadaMinutos && (
@@ -90,17 +107,22 @@ export default function ServicioForm({ onSubmit, servicioInicial, onCancel }) {
           name="descripcion"
           value={form.descripcion}
           onChange={handleChange}
+          disabled={enviando}
           rows={2}
           className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-600/15 transition resize-none"
         />
       </div>
 
       <div className="flex gap-3 justify-end pt-1">
-        <button type="button" onClick={onCancel} className="px-4 py-2 rounded-lg border border-slate-300 text-sm text-slate-600 hover:bg-slate-50 transition">
+        <button type="button" onClick={onCancel} disabled={enviando} className="px-4 py-2 rounded-lg border border-slate-300 text-sm text-slate-600 hover:bg-slate-50 transition disabled:cursor-not-allowed disabled:opacity-60">
           Cancelar
         </button>
-        <button type="submit" className="px-4 py-2 rounded-lg bg-sky-700 text-white text-sm font-medium hover:bg-sky-800 transition">
-          {servicioInicial ? "Guardar cambios" : "Agregar servicio"}
+        <button type="submit" disabled={enviando} className="px-4 py-2 rounded-lg bg-sky-700 text-white text-sm font-medium hover:bg-sky-800 transition disabled:cursor-not-allowed disabled:opacity-60">
+          {enviando
+            ? "Guardando..."
+            : servicioInicial
+              ? "Guardar cambios"
+              : "Agregar servicio"}
         </button>
       </div>
     </form>

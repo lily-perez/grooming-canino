@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useServicios } from "@/context/ServiciosContext";
 import ServicioForm from "@/components/ServicioForm";
@@ -19,6 +19,7 @@ export default function ServiciosPageContent() {
     tareas,
     loading,
     error,
+    limpiarError,
     agregarServicio,
     editarServicio,
     cambiarEstadoServicio,
@@ -34,6 +35,8 @@ export default function ServiciosPageContent() {
   const [tareaEnEdicion, setTareaEnEdicion] = useState(null);
   const [modalServicioAbierto, setModalServicioAbierto] = useState(false);
   const [modalTareaAbierto, setModalTareaAbierto] = useState(false);
+  const [guardandoServicio, setGuardandoServicio] = useState(false);
+  const guardandoServicioRef = useRef(false);
 
   const serviciosFiltrados = useMemo(() => {
     const q = busqueda.trim().toLowerCase();
@@ -53,25 +56,42 @@ export default function ServiciosPageContent() {
 
   function abrirNuevoServicio() {
     if (!esAdmin) return;
+    limpiarError();
     setServicioEnEdicion(null);
     setModalServicioAbierto(true);
   }
 
   function abrirEditarServicio(servicio) {
     if (!esAdmin) return;
+    limpiarError();
     setServicioEnEdicion(servicio);
     setModalServicioAbierto(true);
   }
 
   async function handleSubmitServicio(data) {
-    if (!esAdmin) return false;
-    const guardado = servicioEnEdicion
-      ? await editarServicio(servicioEnEdicion.id, data)
-      : await agregarServicio(data);
-    if (!guardado) return false;
+    if (!esAdmin || guardandoServicioRef.current) return false;
+
+    guardandoServicioRef.current = true;
+    setGuardandoServicio(true);
+
+    try {
+      const guardado = servicioEnEdicion
+        ? await editarServicio(servicioEnEdicion.id, data)
+        : await agregarServicio(data);
+      if (!guardado) return false;
+      setModalServicioAbierto(false);
+      setServicioEnEdicion(null);
+      return true;
+    } finally {
+      guardandoServicioRef.current = false;
+      setGuardandoServicio(false);
+    }
+  }
+
+  function cerrarModalServicio() {
+    if (guardandoServicioRef.current) return;
     setModalServicioAbierto(false);
     setServicioEnEdicion(null);
-    return true;
   }
 
   async function handleCambiarEstadoServicio(servicio) {
@@ -212,12 +232,14 @@ export default function ServiciosPageContent() {
 
       {esAdmin && (
         <>
-          <Modal open={modalServicioAbierto} onClose={() => setModalServicioAbierto(false)}>
+          <Modal open={modalServicioAbierto} onClose={cerrarModalServicio}>
             <ServicioForm
               key={servicioEnEdicion?.id || "nuevo-servicio"}
               onSubmit={handleSubmitServicio}
               servicioInicial={servicioEnEdicion}
-              onCancel={() => setModalServicioAbierto(false)}
+              onCancel={cerrarModalServicio}
+              enviando={guardandoServicio}
+              errorServidor={error}
             />
           </Modal>
 
