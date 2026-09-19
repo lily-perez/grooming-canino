@@ -1,83 +1,119 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import {
-  getServicios,
-  createServicio,
-  updateServicio,
-  deleteServicio,
-} from "@/services/servicios";
-import {
-  getTareas,
-  createTarea,
-  updateTarea,
-  deleteTarea,
-} from "@/services/tareas";
+import { useAuth } from "@/hooks/useAuth";
+import { serviciosRepository } from "@/repositories/serviciosRepository";
+import { tareasRepository } from "@/repositories/tareasRepository";
 import { obtenerMensajeError } from "@/utils/errores";
 
 const ServiciosContext = createContext();
 
 export function ServiciosProvider({ children }) {
+  const { rol } = useAuth();
   const [servicios, setServicios] = useState([]);
   const [tareas, setTareas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  async function cargarTodo() {
+  useEffect(() => {
+    if (!rol) {
+      return undefined;
+    }
+
+    let activo = true;
+    const tareasPromise =
+      rol === "administrador"
+        ? tareasRepository.listar()
+        : tareasRepository.listarMias();
+
+    Promise.all([serviciosRepository.listar(), tareasPromise])
+      .then(([dataServicios, dataTareas]) => {
+        if (!activo) return;
+        setServicios(dataServicios);
+        setTareas(dataTareas);
+        setError(null);
+      })
+      .catch((err) => {
+        if (activo) {
+          setError(obtenerMensajeError(err));
+        }
+      })
+      .finally(() => {
+        if (activo) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      activo = false;
+    };
+  }, [rol]);
+
+  async function ejecutarOperacion(operacion) {
     try {
-      setLoading(true);
-      const [dataServicios, dataTareas] = await Promise.all([
-        getServicios(),
-        getTareas(),
-      ]);
-      setServicios(dataServicios);
-      setTareas(dataTareas);
       setError(null);
+      return await operacion();
     } catch (err) {
       setError(obtenerMensajeError(err));
-    } finally {
-      setLoading(false);
+      return null;
     }
   }
 
-  useEffect(() => {
-    cargarTodo();
-  }, []);
-
-  // --- Servicios ---
   async function agregarServicio(data) {
-    const nuevo = await createServicio(data);
+    const nuevo = await ejecutarOperacion(() =>
+      serviciosRepository.crear(data),
+    );
+    if (!nuevo?.id) {
+      if (nuevo) {
+        setError("La API no devolvió el servicio creado correctamente.");
+      }
+      return false;
+    }
     setServicios((prev) => [...prev, nuevo]);
+    return true;
   }
 
   async function editarServicio(id, data) {
-    const actualizado = await updateServicio(id, data);
+    const actualizado = await ejecutarOperacion(() =>
+      serviciosRepository.actualizar(id, data),
+    );
+    if (!actualizado) return false;
     setServicios((prev) => prev.map((s) => (s.id === id ? actualizado : s)));
+    return true;
   }
 
-  async function eliminarServicio(id) {
-    await deleteServicio(id);
-    setServicios((prev) => prev.filter((s) => s.id !== id));
+  async function cambiarEstadoServicio(id, activo) {
+    const actualizado = await ejecutarOperacion(() =>
+      serviciosRepository.cambiarEstado(id, activo),
+    );
+    if (!actualizado) return false;
+    setServicios((prev) => prev.map((s) => (s.id === id ? actualizado : s)));
+    return true;
   }
 
-  // --- Tareas ---
   async function agregarTarea(data) {
-    const nueva = await createTarea(data);
+    const nueva = await ejecutarOperacion(() => tareasRepository.crear(data));
+    if (!nueva) return false;
     setTareas((prev) => [...prev, nueva]);
+    return true;
   }
 
   async function editarTarea(id, data) {
-    const actualizada = await updateTarea(id, data);
+    const actualizada = await ejecutarOperacion(() =>
+      tareasRepository.actualizar(id, data),
+    );
+    if (!actualizada) return false;
     setTareas((prev) => prev.map((t) => (t.id === id ? actualizada : t)));
+    return true;
   }
 
-  async function eliminarTarea(id) {
-    await deleteTarea(id);
-    setTareas((prev) => prev.filter((t) => t.id !== id));
-  }
-
-  async function toggleTareaCompletada(tarea) {
-    await editarTarea(tarea.id, { ...tarea, completada: !tarea.completada });
+  async function cambiarEstadoTarea(id, estado) {
+    const actualizada = await ejecutarOperacion(() =>
+      tareasRepository.cambiarEstado(id, estado),
+    );
+    if (!actualizada) return false;
+    setTareas((prev) => prev.map((t) => (t.id === id ? actualizada : t)));
+    return true;
   }
 
   return (
@@ -87,13 +123,13 @@ export function ServiciosProvider({ children }) {
         tareas,
         loading,
         error,
+        limpiarError: () => setError(null),
         agregarServicio,
         editarServicio,
-        eliminarServicio,
+        cambiarEstadoServicio,
         agregarTarea,
         editarTarea,
-        eliminarTarea,
-        toggleTareaCompletada,
+        cambiarEstadoTarea,
       }}
     >
       {children}

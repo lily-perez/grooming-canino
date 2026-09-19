@@ -1,26 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
-const CATEGORIAS = ["Baño", "Corte", "Uñas", "Oídos", "Otro"];
+import { useState } from "react";
 
 const initialState = {
   nombre: "",
-  categoria: CATEGORIAS[0],
-  duracion: "",
-  precio: "",
-  groomerAsignado: "",
+  duracionEstimadaMinutos: "",
   descripcion: "",
 };
 
-export default function ServicioForm({ onSubmit, servicioInicial, onCancel }) {
-  const [form, setForm] = useState(servicioInicial || initialState);
+export default function ServicioForm({
+  onSubmit,
+  servicioInicial,
+  onCancel,
+  enviando = false,
+  errorServidor = null,
+}) {
+  const [form, setForm] = useState(() => ({
+    ...initialState,
+    ...servicioInicial,
+  }));
   const [errores, setErrores] = useState({});
-
-  useEffect(() => {
-    setForm(servicioInicial || initialState);
-    setErrores({});
-  }, [servicioInicial]);
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -30,25 +29,25 @@ export default function ServicioForm({ onSubmit, servicioInicial, onCancel }) {
   function validar() {
     const nuevosErrores = {};
     if (!form.nombre.trim()) nuevosErrores.nombre = "El nombre es obligatorio";
-    if (!form.duracion || Number(form.duracion) <= 0)
-      nuevosErrores.duracion = "Debe ser un número mayor a 0";
-    if (!form.precio || Number(form.precio) <= 0)
-      nuevosErrores.precio = "Debe ser un número mayor a 0";
-    if (!form.groomerAsignado.trim())
-      nuevosErrores.groomerAsignado = "Asigna un groomer";
+    if (
+      !form.duracionEstimadaMinutos ||
+      Number(form.duracionEstimadaMinutos) <= 0
+    ) {
+      nuevosErrores.duracionEstimadaMinutos =
+        "Debe ser un número mayor a 0";
+    }
     setErrores(nuevosErrores);
     return Object.keys(nuevosErrores).length === 0;
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    if (!validar()) return;
-    onSubmit({
+    if (enviando || !validar()) return;
+    const guardado = await onSubmit({
       ...form,
-      duracion: Number(form.duracion),
-      precio: Number(form.precio),
+      duracionEstimadaMinutos: Number(form.duracionEstimadaMinutos),
     });
-    if (!servicioInicial) setForm(initialState);
+    if (guardado && !servicioInicial) setForm(initialState);
   }
 
   return (
@@ -62,12 +61,22 @@ export default function ServicioForm({ onSubmit, servicioInicial, onCancel }) {
         </p>
       </div>
 
+      {errorServidor && (
+        <p
+          role="alert"
+          className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700"
+        >
+          {errorServidor}
+        </p>
+      )}
+
       <div className="flex flex-col gap-1.5">
         <label className="text-sm font-medium text-slate-600">Nombre</label>
         <input
           name="nombre"
           value={form.nombre}
           onChange={handleChange}
+          disabled={enviando}
           className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-600/15 transition"
           placeholder="Baño completo"
         />
@@ -75,54 +84,21 @@ export default function ServicioForm({ onSubmit, servicioInicial, onCancel }) {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-slate-600">Categoría</label>
-        <select
-          name="categoria"
-          value={form.categoria}
-          onChange={handleChange}
-          className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-600/15 transition bg-white"
-        >
-          {CATEGORIAS.map((cat) => (
-            <option key={cat} value={cat}>{cat}</option>
-          ))}
-        </select>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-slate-600">Duración (min)</label>
-          <input
-            name="duracion"
-            type="number"
-            value={form.duracion}
-            onChange={handleChange}
-            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-600/15 transition"
-          />
-          {errores.duracion && <p className="text-rose-600 text-xs">{errores.duracion}</p>}
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-slate-600">Precio ($)</label>
-          <input
-            name="precio"
-            type="number"
-            value={form.precio}
-            onChange={handleChange}
-            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-600/15 transition"
-          />
-          {errores.precio && <p className="text-rose-600 text-xs">{errores.precio}</p>}
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-slate-600">Groomer asignado</label>
+        <label className="text-sm font-medium text-slate-600">Duración estimada (min)</label>
         <input
-          name="groomerAsignado"
-          value={form.groomerAsignado}
+          name="duracionEstimadaMinutos"
+          type="number"
+          min="1"
+          value={form.duracionEstimadaMinutos}
           onChange={handleChange}
+          disabled={enviando}
           className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-600/15 transition"
-          placeholder="Larris"
         />
-        {errores.groomerAsignado && <p className="text-rose-600 text-xs">{errores.groomerAsignado}</p>}
+        {errores.duracionEstimadaMinutos && (
+          <p className="text-rose-600 text-xs">
+            {errores.duracionEstimadaMinutos}
+          </p>
+        )}
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -131,17 +107,22 @@ export default function ServicioForm({ onSubmit, servicioInicial, onCancel }) {
           name="descripcion"
           value={form.descripcion}
           onChange={handleChange}
+          disabled={enviando}
           rows={2}
           className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-600/15 transition resize-none"
         />
       </div>
 
       <div className="flex gap-3 justify-end pt-1">
-        <button type="button" onClick={onCancel} className="px-4 py-2 rounded-lg border border-slate-300 text-sm text-slate-600 hover:bg-slate-50 transition">
+        <button type="button" onClick={onCancel} disabled={enviando} className="px-4 py-2 rounded-lg border border-slate-300 text-sm text-slate-600 hover:bg-slate-50 transition disabled:cursor-not-allowed disabled:opacity-60">
           Cancelar
         </button>
-        <button type="submit" className="px-4 py-2 rounded-lg bg-sky-700 text-white text-sm font-medium hover:bg-sky-800 transition">
-          {servicioInicial ? "Guardar cambios" : "Agregar servicio"}
+        <button type="submit" disabled={enviando} className="px-4 py-2 rounded-lg bg-sky-700 text-white text-sm font-medium hover:bg-sky-800 transition disabled:cursor-not-allowed disabled:opacity-60">
+          {enviando
+            ? "Guardando..."
+            : servicioInicial
+              ? "Guardar cambios"
+              : "Agregar servicio"}
         </button>
       </div>
     </form>

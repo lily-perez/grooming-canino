@@ -1,8 +1,12 @@
 "use client";
 
-import { IconGrip, IconPencil, IconTrash, IconCheck } from "./icons";
+import { IconGrip, IconPencil, IconCheck } from "./icons";
 
-const MOMENTO_LABEL = { antes: "Antes", durante: "Durante", despues: "Después" };
+const ESTADO_LABEL = {
+  pendiente: "Pendiente",
+  en_proceso: "En proceso",
+  completada: "Completada",
+};
 
 function Avatar({ nombre }) {
   const inicial = nombre ? nombre.trim().charAt(0).toUpperCase() : "?";
@@ -13,18 +17,25 @@ function Avatar({ nombre }) {
   );
 }
 
-export default function TareasBreakdown({ tareas, servicios, onEditar, onEliminar, onToggleCompletada, soloLectura }) {
+export default function TareasBreakdown({
+  tareas,
+  servicios,
+  onEditar,
+  onCambiarEstado,
+  puedeEditar,
+  puedeCambiarEstado,
+}) {
   if (tareas.length === 0) {
     return (
       <div className="bg-white border border-dashed border-slate-300 rounded-2xl p-10 text-center">
         <p className="text-slate-500 text-sm">No hay tareas registradas.</p>
-        <p className="text-slate-400 text-xs mt-1">Agrega una con el botón "Nueva tarea".</p>
+        <p className="text-slate-400 text-xs mt-1">Agrega una con el botón &quot;Nueva tarea&quot;.</p>
       </div>
     );
   }
 
   function servicioDe(servicioId) {
-    return servicios.find((s) => s.id === servicioId);
+    return servicios.find((s) => String(s.id) === String(servicioId));
   }
 
   return (
@@ -41,37 +52,36 @@ export default function TareasBreakdown({ tareas, servicios, onEditar, onElimina
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-slate-800 truncate">{t.nombre}</p>
               <p className="text-xs text-slate-400 truncate">
-                {servicio ? servicio.nombre : "Sin servicio"} · {MOMENTO_LABEL[t.momento] || t.momento}
+                {servicio ? servicio.nombre : "Sin servicio"} · {t.horaInicio || "--:--"} - {t.horaFin || "--:--"}
               </p>
             </div>
 
             <div className="hidden sm:flex items-center gap-2 text-xs text-slate-500 shrink-0">
-              <Avatar nombre={servicio?.groomerAsignado} />
-              {servicio?.groomerAsignado || "Sin asignar"}
+              <Avatar nombre={t.groomerId} />
+              {t.groomerId || "Sin asignar"}
             </div>
 
             <button
-              onClick={() => onToggleCompletada(t)}
-              disabled={soloLectura}
+              onClick={() => onCambiarEstado(t)}
+              disabled={!puedeCambiarEstado || t.estado === "completada"}
               className={`shrink-0 text-xs font-medium px-2.5 py-1 rounded-full transition ${
-                t.completada
+                t.estado === "completada"
                   ? "bg-emerald-50 text-emerald-700"
-                  : "bg-amber-50 text-amber-700"
-              } ${soloLectura ? "cursor-default" : ""}`}
+                  : t.estado === "en_proceso"
+                    ? "bg-sky-50 text-sky-700"
+                    : "bg-amber-50 text-amber-700"
+              } ${!puedeCambiarEstado || t.estado === "completada" ? "cursor-default" : ""}`}
             >
               <span className="inline-flex items-center gap-1">
-                {t.completada && <IconCheck className="w-3 h-3" />}
-                {t.completada ? "Completada" : "Pendiente"}
+                {t.estado === "completada" && <IconCheck className="w-3 h-3" />}
+                {ESTADO_LABEL[t.estado] || t.estado}
               </span>
             </button>
 
-            {!soloLectura && (
+            {puedeEditar && t.estado === "pendiente" && (
               <div className="hidden sm:flex gap-3 opacity-0 group-hover:opacity-100 transition shrink-0">
                 <button onClick={() => onEditar(t)} aria-label="Editar tarea" className="text-slate-400 hover:text-sky-700">
                   <IconPencil className="w-4 h-4" />
-                </button>
-                <button onClick={() => onEliminar(t.id)} aria-label="Eliminar tarea" className="text-slate-400 hover:text-rose-600">
-                  <IconTrash className="w-4 h-4" />
                 </button>
               </div>
             )}
