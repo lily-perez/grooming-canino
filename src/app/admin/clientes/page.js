@@ -1,20 +1,20 @@
-import ListaClientes from "@/components/clientes/ListaClientes";
+import GestionClientes from "@/components/clientes/GestionClientes";
 
 export default function AdminClientesPage() {
   return (
     <section className="space-y-6">
-      <div>
-        <p className="text-sm font-semibold uppercase tracking-wide text-sky-700">
-          Clientes
-        </p>
-        <h1 className="mt-1 text-3xl font-bold text-slate-900">
-          Gestión de clientes
-        </h1>
-        <p className="mt-2 text-slate-600">
-          Consulta, crea y administra los clientes del negocio.
-        </p>
+      <div className="flex items-center justify-between border-b border-gray-200 pb-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Gestión de Clientes y Mascotas
+          </h1>
+          <p className="text-sm text-gray-600">
+            Administra los dueños y la información de sus mascotas.
+          </p>
+        </div>
       </div>
-      <ListaClientes />
+
+      <GestionClientes />
     </section>
   );
 }
