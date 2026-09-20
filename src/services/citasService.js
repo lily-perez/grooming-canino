@@ -1,8 +1,17 @@
 import apiClient from "@/services/apiClient";
 
 export const citasService = {
-  listar() {
-    return apiClient.get("/api/citas");
+  listar(filtros = {}) {
+    const params = new URLSearchParams();
+
+    for (const [campo, valor] of Object.entries(filtros)) {
+      if (valor) {
+        params.set(campo, valor);
+      }
+    }
+
+    const query = params.toString();
+    return apiClient.get(query ? `/api/citas?${query}` : "/api/citas");
   },
 
   obtener(id) {
@@ -17,7 +26,11 @@ export const citasService = {
     return apiClient.put(`/api/citas/${id}`, datos);
   },
 
-  eliminar(id) {
-    return apiClient.delete(`/api/citas/${id}`);
+  cambiarEstado(id, estado) {
+    return apiClient.patch(`/api/citas/${id}/estado`, { estado });
+  },
+
+  finalizar(id, datos) {
+    return apiClient.post(`/api/citas/${id}/finalizar`, datos);
   },
 };

@@ -1,5 +1,10 @@
 import ServiciosPageContent from "@/components/servicios/ServiciosPageContent";
+import { ServiciosProvider } from "@/context/ServiciosContext";
 
 export default function AdminServiciosPage() {
-  return <ServiciosPageContent />;
+  return (
+    <ServiciosProvider>
+      <ServiciosPageContent />
+    </ServiciosProvider>
+  );
 }

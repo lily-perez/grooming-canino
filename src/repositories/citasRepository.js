@@ -1,8 +1,8 @@
 import { citasService } from "@/services/citasService";
 
 export const citasRepository = {
-  async listar() {
-    const respuesta = await citasService.listar();
+  async listar(filtros) {
+    const respuesta = await citasService.listar(filtros);
     return respuesta.data;
   },
 
@@ -21,8 +21,13 @@ export const citasRepository = {
     return respuesta.data;
   },
 
-  async eliminar(id) {
-    const respuesta = await citasService.eliminar(id);
+  async cambiarEstado(id, estado) {
+    const respuesta = await citasService.cambiarEstado(id, estado);
+    return respuesta.data;
+  },
+
+  async finalizar(id, datos) {
+    const respuesta = await citasService.finalizar(id, datos);
     return respuesta.data;
   },
 };

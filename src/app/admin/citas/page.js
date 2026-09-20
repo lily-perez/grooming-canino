@@ -1,6 +1,8 @@
 import GestionCitas from "@/components/citas/GestionCitas";
 
-export default function CitasPage() {
+export default async function CitasPage({ searchParams }) {
+  const params = await searchParams;
+
   return (
     <section className="space-y-6">
       <div>
@@ -18,7 +20,7 @@ export default function CitasPage() {
         </p>
       </div>
 
-      <GestionCitas />
+      <GestionCitas perroIdInicial={params.perroId || ""} />
     </section>
   );
 }

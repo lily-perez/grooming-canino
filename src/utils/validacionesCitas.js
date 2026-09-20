@@ -1,75 +1,68 @@
-const HORA_REGEX = /^([01]\d|2[0-3]):[0-5]\d$/;
+import {
+  esFechaValida,
+  esHoraValida,
+  sumarMinutosAHora,
+} from "@/utils/tiempo";
+import { tieneErrores } from "@/utils/validacionesServiciosTareas";
 
 export const ESTADOS_CITA = [
   "programada",
+  "en_proceso",
   "completada",
   "cancelada",
 ];
 
+export function extraerServicioIds(datos = {}) {
+  const origen = Array.isArray(datos.servicioIds)
+    ? datos.servicioIds
+    : [datos.servicioId].filter(Boolean);
+
+  return [...new Set(origen.map((id) => String(id ?? "").trim()).filter(Boolean))];
+}
+
+export function calcularHoraFinEstimada(horaInicio, servicios = []) {
+  const duracionTotal = servicios.reduce(
+    (total, servicio) => total + Number(servicio.duracionEstimadaMinutos || 0),
+    0,
+  );
+
+  if (!esHoraValida(horaInicio) || duracionTotal <= 0) {
+    return "";
+  }
+
+  return sumarMinutosAHora(horaInicio, duracionTotal);
+}
+
 export function validarCita(datos = {}) {
   const erroresCampos = {};
-
-  const clienteId = String(datos.clienteId ?? "").trim();
   const perroId = String(datos.perroId ?? "").trim();
-  const groomerId = String(datos.groomerId ?? "").trim();
-  const servicioId = String(datos.servicioId ?? "").trim();
+  const servicioIds = extraerServicioIds(datos);
   const fecha = String(datos.fecha ?? "").trim();
   const horaInicio = String(datos.horaInicio ?? "").trim();
-  const horaFin = String(datos.horaFin ?? "").trim();
-  const estado = String(datos.estado ?? "programada").trim();
   const observaciones = String(datos.observaciones ?? "").trim();
 
-  if (!clienteId) {
-    erroresCampos.clienteId = "Selecciona un cliente.";
-  }
-
   if (!perroId) {
-    erroresCampos.perroId = "Selecciona un perro.";
+    erroresCampos.perroId = "El perro es obligatorio.";
   }
 
-  if (!groomerId) {
-    erroresCampos.groomerId = "Selecciona un groomer.";
+  if (servicioIds.length === 0) {
+    erroresCampos.servicioIds = "Selecciona al menos un servicio.";
   }
 
-  if (!servicioId) {
-    erroresCampos.servicioId = "Selecciona un servicio.";
+  if (!esFechaValida(fecha)) {
+    erroresCampos.fecha = "Ingresa una fecha válida.";
   }
 
-  if (!fecha) {
-    erroresCampos.fecha = "La fecha es obligatoria.";
-  }
-
-  if (!HORA_REGEX.test(horaInicio)) {
+  if (!esHoraValida(horaInicio)) {
     erroresCampos.horaInicio = "Ingresa una hora de inicio válida.";
-  }
-
-  if (!HORA_REGEX.test(horaFin)) {
-    erroresCampos.horaFin = "Ingresa una hora de finalización válida.";
-  }
-
-  if (
-    HORA_REGEX.test(horaInicio) &&
-    HORA_REGEX.test(horaFin) &&
-    horaFin <= horaInicio
-  ) {
-    erroresCampos.horaFin =
-      "La hora de finalización debe ser posterior a la hora de inicio.";
-  }
-
-  if (!ESTADOS_CITA.includes(estado)) {
-    erroresCampos.estado = "El estado de la cita no es válido.";
   }
 
   return {
     datos: {
-      clienteId,
       perroId,
-      groomerId,
-      servicioId,
+      servicioIds,
       fecha,
       horaInicio,
-      horaFin,
-      estado,
       observaciones,
     },
     erroresCampos,
@@ -77,28 +70,13 @@ export function validarCita(datos = {}) {
 }
 
 export function tieneErroresCita(erroresCampos) {
-  return Object.keys(erroresCampos).length > 0;
+  return tieneErrores(erroresCampos);
 }
 
-export function hayCruceHorario(citas, nuevaCita, idExcluir = null) {
-  return citas.some((cita) => {
-    if (idExcluir && String(cita.id) === String(idExcluir)) {
-      return false;
-    }
+export function transicionCitaPermitida(estadoActual, estadoNuevo) {
+  if (estadoActual === "programada" && estadoNuevo === "cancelada") {
+    return true;
+  }
 
-    if (cita.estado === "cancelada") {
-      return false;
-    }
-
-    const mismoGroomer =
-      String(cita.groomerId) === String(nuevaCita.groomerId);
-
-    const mismaFecha = cita.fecha === nuevaCita.fecha;
-
-    const horariosSeCruzan =
-      nuevaCita.horaInicio < cita.horaFin &&
-      nuevaCita.horaFin > cita.horaInicio;
-
-    return mismoGroomer && mismaFecha && horariosSeCruzan;
-  });
+  return false;
 }

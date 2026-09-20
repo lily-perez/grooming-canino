@@ -9,15 +9,17 @@ export function useCitas() {
   const [procesando, setProcesando] = useState(false);
   const [error, setError] = useState(null);
 
-  const cargarCitas = useCallback(async () => {
+  const cargarCitas = useCallback(async (filtros) => {
     setCargando(true);
     setError(null);
 
     try {
-      const datos = await citasRepository.listar();
+      const datos = await citasRepository.listar(filtros);
       setCitas(datos);
+      return datos;
     } catch (errorPeticion) {
       setError(errorPeticion);
+      throw errorPeticion;
     } finally {
       setCargando(false);
     }
@@ -56,8 +58,13 @@ export function useCitas() {
     try {
       const nuevaCita = await citasRepository.crear(datos);
 
-      setCitas((actuales) => [...actuales, nuevaCita]);
+      if (!nuevaCita?.id) {
+        throw Object.assign(new Error("La API no devolvió la cita creada."), {
+          codigo: "ERROR_RESPUESTA",
+        });
+      }
 
+      setCitas((actuales) => [...actuales, nuevaCita]);
       return nuevaCita;
     } catch (errorPeticion) {
       setError(errorPeticion);
@@ -73,13 +80,11 @@ export function useCitas() {
 
     try {
       const citaActualizada = await citasRepository.actualizar(id, datos);
-
       setCitas((actuales) =>
         actuales.map((cita) =>
           String(cita.id) === String(id) ? citaActualizada : cita,
         ),
       );
-
       return citaActualizada;
     } catch (errorPeticion) {
       setError(errorPeticion);
@@ -89,16 +94,47 @@ export function useCitas() {
     }
   }, []);
 
-  const eliminarCita = useCallback(async (id) => {
+  const cambiarEstadoCita = useCallback(async (id, estado) => {
     setProcesando(true);
     setError(null);
 
     try {
-      await citasRepository.eliminar(id);
+      const citaActualizada = await citasRepository.cambiarEstado(id, estado);
+      setCitas((actuales) =>
+        actuales.map((cita) =>
+          String(cita.id) === String(id) ? citaActualizada : cita,
+        ),
+      );
+      return citaActualizada;
+    } catch (errorPeticion) {
+      setError(errorPeticion);
+      throw errorPeticion;
+    } finally {
+      setProcesando(false);
+    }
+  }, []);
+
+  const finalizarCita = useCallback(async (id, datos) => {
+    setProcesando(true);
+    setError(null);
+
+    try {
+      const resultado = await citasRepository.finalizar(id, datos);
+      const citaActualizada = resultado?.cita;
+
+      if (!citaActualizada?.id) {
+        throw Object.assign(
+          new Error("La API no devolvió la cita finalizada."),
+          { codigo: "ERROR_RESPUESTA" },
+        );
+      }
 
       setCitas((actuales) =>
-        actuales.filter((cita) => String(cita.id) !== String(id)),
+        actuales.map((cita) =>
+          String(cita.id) === String(id) ? citaActualizada : cita,
+        ),
       );
+      return resultado;
     } catch (errorPeticion) {
       setError(errorPeticion);
       throw errorPeticion;
@@ -115,6 +151,7 @@ export function useCitas() {
     cargarCitas,
     crearCita,
     actualizarCita,
-    eliminarCita,
+    cambiarEstadoCita,
+    finalizarCita,
   };
 }
