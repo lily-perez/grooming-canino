@@ -114,6 +114,35 @@ export function useCitas() {
     }
   }, []);
 
+  const finalizarCita = useCallback(async (id, datos) => {
+    setProcesando(true);
+    setError(null);
+
+    try {
+      const resultado = await citasRepository.finalizar(id, datos);
+      const citaActualizada = resultado?.cita;
+
+      if (!citaActualizada?.id) {
+        throw Object.assign(
+          new Error("La API no devolvió la cita finalizada."),
+          { codigo: "ERROR_RESPUESTA" },
+        );
+      }
+
+      setCitas((actuales) =>
+        actuales.map((cita) =>
+          String(cita.id) === String(id) ? citaActualizada : cita,
+        ),
+      );
+      return resultado;
+    } catch (errorPeticion) {
+      setError(errorPeticion);
+      throw errorPeticion;
+    } finally {
+      setProcesando(false);
+    }
+  }, []);
+
   return {
     citas,
     cargando,
@@ -123,5 +152,6 @@ export function useCitas() {
     crearCita,
     actualizarCita,
     cambiarEstadoCita,
+    finalizarCita,
   };
 }

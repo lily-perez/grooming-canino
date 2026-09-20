@@ -8,6 +8,7 @@ import ErrorMessage from "@/components/shared/ErrorMessage";
 import Loading from "@/components/shared/Loading";
 import { clientesRepository } from "@/repositories/clientesRepository";
 import { citasRepository } from "@/repositories/citasRepository";
+import { historialRepository } from "@/repositories/historialRepository";
 import { perrosRepository } from "@/repositories/perrosRepository";
 import { tieneErroresPerro, validarPerro } from "@/utils/validacionesPerros";
 import { obtenerMensajeError } from "@/utils/errores";
@@ -17,6 +18,7 @@ export default function DetallePerro({ perroId }) {
   const [cliente, setCliente] = useState(null);
   const [clientes, setClientes] = useState([]);
   const [citas, setCitas] = useState([]);
+  const [historial, setHistorial] = useState([]);
   const [formulario, setFormulario] = useState(FORMULARIO_PERRO_INICIAL);
   const [erroresCampos, setErroresCampos] = useState({});
   const [cargando, setCargando] = useState(true);
@@ -31,8 +33,9 @@ export default function DetallePerro({ perroId }) {
       perrosRepository.obtener(perroId),
       clientesRepository.listar(),
       citasRepository.listar({ perroId }),
+      historialRepository.listarPorPerro(perroId),
     ])
-      .then(([perroActual, clientesActuales, citasActuales]) => {
+      .then(([perroActual, clientesActuales, citasActuales, historialActual]) => {
         if (!activo) {
           return;
         }
@@ -46,6 +49,7 @@ export default function DetallePerro({ perroId }) {
         setClientes(clientesActuales);
         setCliente(clienteActual);
         setCitas(citasActuales);
+        setHistorial(historialActual);
         setFormulario({
           clienteId: perroActual.clienteId,
           nombre: perroActual.nombre,
@@ -204,7 +208,7 @@ export default function DetallePerro({ perroId }) {
       <section className="rounded-xl border border-slate-200 bg-white p-6">
         <h2 className="text-xl font-semibold text-slate-900">Citas relacionadas</h2>
         <p className="mt-1 text-sm text-slate-600">
-          El historial de atención se implementará en un incremento posterior.
+          Citas registradas para este perro.
         </p>
 
         {citas.length === 0 ? (
@@ -222,6 +226,55 @@ export default function DetallePerro({ perroId }) {
                   {cita.fecha} · {cita.horaInicio} - {cita.horaFinEstimada}
                 </p>
                 <p className="text-slate-600">{cita.estado}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="rounded-xl border border-slate-200 bg-white p-6">
+        <h2 className="text-xl font-semibold text-slate-900">
+          Historial de atención
+        </h2>
+        <p className="mt-1 text-sm text-slate-600">
+          Registros de atención asociados a este perro.
+        </p>
+
+        {historial.length === 0 ? (
+          <div className="mt-4">
+            <EmptyState mensaje="Este perro todavía no tiene registros de atención." />
+          </div>
+        ) : (
+          <ul className="mt-4 space-y-2">
+            {historial.map((registro) => (
+              <li
+                key={registro.id}
+                className="rounded-lg border border-slate-200 px-4 py-3 text-sm"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="font-medium text-slate-900">
+                      {registro.fecha}
+                      {registro.cita
+                        ? ` · Cita ${registro.cita.horaInicio}`
+                        : ""}
+                    </p>
+                    <p className="text-slate-600">
+                      {registro.registradoPor?.nombre
+                        ? `Registrado por ${registro.registradoPor.nombre}`
+                        : "Registro de atención"}
+                    </p>
+                    {registro.observaciones ? (
+                      <p className="mt-1 text-slate-600">{registro.observaciones}</p>
+                    ) : null}
+                  </div>
+                  <Link
+                    href={`/admin/historial/${registro.id}`}
+                    className="font-medium text-sky-700 hover:text-sky-900"
+                  >
+                    Ver registro
+                  </Link>
+                </div>
               </li>
             ))}
           </ul>

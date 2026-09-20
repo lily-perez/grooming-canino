@@ -1,10 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useCitas } from "@/hooks/useCitas";
 import { useClientes } from "@/hooks/useClientes";
 import { usePerros } from "@/hooks/usePerros";
+import Modal from "@/components/Modal";
+import RegistroAtencionForm, {
+  FORMULARIO_OBSERVACION_INICIAL,
+} from "@/components/historial/RegistroAtencionForm";
 import { serviciosRepository } from "@/repositories/serviciosRepository";
+import { tareasRepository } from "@/repositories/tareasRepository";
 import { disponibilidadRepository } from "@/repositories/disponibilidadRepository";
 import ErrorMessage from "@/components/shared/ErrorMessage";
 import { obtenerMensajeError } from "@/utils/errores";
@@ -36,6 +42,13 @@ export default function GestionCitas({ perroIdInicial = "" }) {
   const [groomersDisponibles, setGroomersDisponibles] = useState([]);
   const [errorDisponibilidad, setErrorDisponibilidad] = useState(null);
   const [consultandoDisponibilidad, setConsultandoDisponibilidad] = useState(false);
+  const [tareas, setTareas] = useState([]);
+  const [citaAFinalizar, setCitaAFinalizar] = useState(null);
+  const [formularioFinalizar, setFormularioFinalizar] = useState(
+    FORMULARIO_OBSERVACION_INICIAL,
+  );
+  const [mensajeExito, setMensajeExito] = useState("");
+  const [registroCreadoId, setRegistroCreadoId] = useState("");
 
   const {
     citas,
@@ -45,6 +58,7 @@ export default function GestionCitas({ perroIdInicial = "" }) {
     crearCita,
     actualizarCita,
     cambiarEstadoCita,
+    finalizarCita,
   } = useCitas();
   const { clientes } = useClientes();
   const { perros } = usePerros();
@@ -62,6 +76,27 @@ export default function GestionCitas({ perroIdInicial = "" }) {
       .catch(() => {
         if (activo) {
           setServicios([]);
+        }
+      });
+
+    return () => {
+      activo = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let activo = true;
+
+    tareasRepository
+      .listar()
+      .then((data) => {
+        if (activo) {
+          setTareas(data);
+        }
+      })
+      .catch(() => {
+        if (activo) {
+          setTareas([]);
         }
       });
 
@@ -130,6 +165,58 @@ export default function GestionCitas({ perroIdInicial = "" }) {
 
     const cliente = clientesPorId.get(String(perro.clienteId));
     return cliente ? `${perro.nombre} · ${cliente.nombre}` : perro.nombre;
+  }
+
+  function citaPuedeFinalizarse(cita) {
+    if (cita.estado !== "en_proceso") {
+      return false;
+    }
+
+    const relacionadas = tareas.filter(
+      (tarea) => String(tarea.citaId) === String(cita.id),
+    );
+
+    return (
+      relacionadas.length > 0 &&
+      relacionadas.every((tarea) => tarea.estado === "completada")
+    );
+  }
+
+  function abrirFinalizar(cita) {
+    setCitaAFinalizar(cita);
+    setFormularioFinalizar({ ...FORMULARIO_OBSERVACION_INICIAL });
+    setMensajeExito("");
+    setRegistroCreadoId("");
+  }
+
+  function cerrarFinalizar() {
+    if (procesando) {
+      return;
+    }
+
+    setCitaAFinalizar(null);
+    setFormularioFinalizar({ ...FORMULARIO_OBSERVACION_INICIAL });
+  }
+
+  async function manejarFinalizar(event) {
+    event.preventDefault();
+
+    if (!citaAFinalizar) {
+      return;
+    }
+
+    try {
+      const resultado = await finalizarCita(
+        citaAFinalizar.id,
+        formularioFinalizar,
+      );
+      setCitaAFinalizar(null);
+      setFormularioFinalizar({ ...FORMULARIO_OBSERVACION_INICIAL });
+      setRegistroCreadoId(resultado?.registroAtencion?.id || "");
+      setMensajeExito("Cita finalizada correctamente.");
+    } catch {
+      // El hook ya almacena el error.
+    }
   }
 
   function manejarCambio(event) {
@@ -232,6 +319,25 @@ export default function GestionCitas({ perroIdInicial = "" }) {
 
   return (
     <div className="space-y-6">
+      {mensajeExito ? (
+        <div
+          role="status"
+          className="rounded-md border border-green-400 bg-green-100 p-4 text-sm text-green-700"
+        >
+          {mensajeExito}
+          {registroCreadoId ? (
+            <>
+              {" "}
+              <Link
+                href={`/admin/historial/${registroCreadoId}`}
+                className="font-medium underline"
+              >
+                Ver registro de atención
+              </Link>
+            </>
+          ) : null}
+        </div>
+      ) : null}
       {error ? (
         <ErrorMessage mensaje={obtenerMensajeError(error)} />
       ) : null}
@@ -566,6 +672,16 @@ export default function GestionCitas({ perroIdInicial = "" }) {
                         </button>
                       </div>
                     ) : null}
+                    {citaPuedeFinalizarse(cita) ? (
+                      <button
+                        type="button"
+                        disabled={procesando}
+                        onClick={() => abrirFinalizar(cita)}
+                        className="rounded-lg bg-sky-700 px-3 py-2 text-sm font-medium text-white hover:bg-sky-800 disabled:opacity-60"
+                      >
+                        Finalizar
+                      </button>
+                    ) : null}
                   </div>
                 </article>
               ))}
@@ -573,6 +689,26 @@ export default function GestionCitas({ perroIdInicial = "" }) {
           )}
         </section>
       </div>
+
+      <Modal open={Boolean(citaAFinalizar)} onClose={cerrarFinalizar}>
+        <div className="rounded-xl border border-slate-200 bg-white p-6">
+          <h2 className="text-lg font-semibold text-slate-900">
+            Finalizar cita
+          </h2>
+          <p className="mt-1 mb-4 text-sm text-slate-600">
+            Registra las observaciones de la atención. Todos los campos son opcionales.
+          </p>
+          <RegistroAtencionForm
+            formulario={formularioFinalizar}
+            erroresCampos={error?.erroresCampos || {}}
+            guardando={procesando}
+            textoAccion="Finalizar cita"
+            onChange={setFormularioFinalizar}
+            onSubmit={manejarFinalizar}
+            onCancel={cerrarFinalizar}
+          />
+        </div>
+      </Modal>
     </div>
   );
 }
