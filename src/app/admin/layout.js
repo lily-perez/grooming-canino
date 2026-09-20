@@ -3,12 +3,7 @@ import BotonCerrarSesion from "@/components/autenticacion/BotonCerrarSesion";
 import NavLink from "@/components/shared/NavLink";
 import { obtenerUsuarioAutenticado } from "@/server/autenticacion/autorizacion";
 
-const modulosPendientes = [
-  "Clientes",
-  "Perros",
-  "Historial",
-  "Reportes",
-];
+const modulosPendientes = ["Historial", "Reportes"];
 
 const ACTIVO = "block rounded-lg bg-sky-700 px-3 py-2 font-medium text-white";
 const INACTIVO = "block rounded-lg px-3 py-2 font-medium text-slate-700 hover:bg-slate-100";
@@ -42,17 +37,23 @@ export default async function AdminLayout({ children }) {
             <NavLink href="/admin/dashboard" activeClassName={ACTIVO} idleClassName={INACTIVO}>
               Dashboard
             </NavLink>
-            <NavLink href="/admin/usuarios" activeClassName={ACTIVO} idleClassName={INACTIVO}>
-              Usuarios
+            <NavLink href="/admin/citas" activeClassName={ACTIVO} idleClassName={INACTIVO}>
+              Citas
+            </NavLink>
+            <NavLink href="/admin/clientes" activeClassName={ACTIVO} idleClassName={INACTIVO}>
+              Clientes
+            </NavLink>
+            <NavLink href="/admin/perros" activeClassName={ACTIVO} idleClassName={INACTIVO}>
+              Perros
             </NavLink>
             <NavLink href="/admin/servicios" activeClassName={ACTIVO} idleClassName={INACTIVO}>
               Servicios
             </NavLink>
-            <NavLink href="/admin/citas" activeClassName={ACTIVO} idleClassName={INACTIVO}>
-              Citas
-            </NavLink>
             <NavLink href="/admin/groomers" activeClassName={ACTIVO} idleClassName={INACTIVO}>
               Groomers
+            </NavLink>
+            <NavLink href="/admin/usuarios" activeClassName={ACTIVO} idleClassName={INACTIVO}>
+              Usuarios
             </NavLink>
             {modulosPendientes.map((modulo) => (
               <button

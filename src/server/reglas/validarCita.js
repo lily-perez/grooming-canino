@@ -1,4 +1,5 @@
 import { listarServiciosPersistidos } from "@/server/persistencia/serviciosAdapter";
+import { validarPerroYClienteDeCita } from "@/server/reglas/validarClientePerro";
 import { crearErrorServidor } from "@/server/respuestas";
 import { calcularHoraFinEstimada } from "@/utils/validacionesCitas";
 
@@ -37,6 +38,7 @@ export async function resolverServiciosDeCita(servicioIds) {
 }
 
 export async function completarDatosCita(datos) {
+  await validarPerroYClienteDeCita(datos.perroId);
   const servicios = await resolverServiciosDeCita(datos.servicioIds);
   const horaFinEstimada = calcularHoraFinEstimada(
     datos.horaInicio,

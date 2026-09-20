@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useCitas } from "@/hooks/useCitas";
+import { useClientes } from "@/hooks/useClientes";
+import { usePerros } from "@/hooks/usePerros";
 import { serviciosRepository } from "@/repositories/serviciosRepository";
 import { disponibilidadRepository } from "@/repositories/disponibilidadRepository";
 import ErrorMessage from "@/components/shared/ErrorMessage";
@@ -16,8 +18,12 @@ const FORMULARIO_INICIAL = {
   observaciones: "",
 };
 
-export default function GestionCitas() {
-  const [formulario, setFormulario] = useState(FORMULARIO_INICIAL);
+export default function GestionCitas({ perroIdInicial = "" }) {
+  const [formulario, setFormulario] = useState({
+    ...FORMULARIO_INICIAL,
+    perroId: perroIdInicial,
+  });
+  const [clienteId, setClienteId] = useState("");
   const [citaEnEdicion, setCitaEnEdicion] = useState(null);
   const [servicios, setServicios] = useState([]);
   const [filtroFecha, setFiltroFecha] = useState("");
@@ -40,6 +46,8 @@ export default function GestionCitas() {
     actualizarCita,
     cambiarEstadoCita,
   } = useCitas();
+  const { clientes } = useClientes();
+  const { perros } = usePerros();
 
   useEffect(() => {
     let activo = true;
@@ -91,6 +99,39 @@ export default function GestionCitas() {
     [citas, filtroFecha, filtroEstado],
   );
 
+  const perrosPorId = useMemo(
+    () => new Map(perros.map((perro) => [String(perro.id), perro])),
+    [perros],
+  );
+  const clientesPorId = useMemo(
+    () => new Map(clientes.map((cliente) => [String(cliente.id), cliente])),
+    [clientes],
+  );
+  const perroSeleccionado = perrosPorId.get(String(formulario.perroId));
+  const clienteSeleccionadoId = clienteId || perroSeleccionado?.clienteId || "";
+  const perrosDelCliente = perros.filter((perro) => {
+    if (String(perro.clienteId) !== String(clienteSeleccionadoId)) {
+      return false;
+    }
+
+    return perro.activo || String(perro.id) === String(formulario.perroId);
+  });
+  const clientesParaCita = clientes.filter(
+    (cliente) =>
+      cliente.activo || String(cliente.id) === String(clienteSeleccionadoId),
+  );
+
+  function etiquetaPerro(perroId) {
+    const perro = perrosPorId.get(String(perroId));
+
+    if (!perro) {
+      return `Referencia histórica: ${perroId}`;
+    }
+
+    const cliente = clientesPorId.get(String(perro.clienteId));
+    return cliente ? `${perro.nombre} · ${cliente.nombre}` : perro.nombre;
+  }
+
   function manejarCambio(event) {
     const { name, value } = event.target;
     setFormulario((actual) => ({ ...actual, [name]: value }));
@@ -110,7 +151,9 @@ export default function GestionCitas() {
   }
 
   function iniciarEdicion(cita) {
+    const perro = perrosPorId.get(String(cita.perroId));
     setCitaEnEdicion(cita);
+    setClienteId(perro?.clienteId || "");
     setFormulario({
       perroId: cita.perroId,
       servicioIds: (cita.servicioIds || []).map(String),
@@ -122,7 +165,13 @@ export default function GestionCitas() {
 
   function limpiarFormulario() {
     setCitaEnEdicion(null);
+    setClienteId("");
     setFormulario(FORMULARIO_INICIAL);
+  }
+
+  function manejarCambioCliente(event) {
+    setClienteId(event.target.value);
+    setFormulario((actual) => ({ ...actual, perroId: "" }));
   }
 
   async function manejarSubmit(event) {
@@ -202,20 +251,50 @@ export default function GestionCitas() {
             <form className="space-y-4" onSubmit={manejarSubmit}>
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Referencia de perro
+                  Cliente
                 </label>
-                <input
+                <select
+                  value={clienteSeleccionadoId}
+                  onChange={manejarCambioCliente}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-sky-500"
+                >
+                  <option value="">Selecciona un cliente</option>
+                  {clientesParaCita.map((cliente) => (
+                    <option key={cliente.id} value={cliente.id}>
+                      {cliente.nombre}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700">
+                  Perro
+                </label>
+                <select
                   name="perroId"
                   value={formulario.perroId}
                   onChange={manejarCambio}
-                  placeholder="ID de perro (catálogo pendiente)"
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-sky-500"
-                />
+                >
+                  <option value="">Selecciona un perro</option>
+                  {perroSeleccionado || !formulario.perroId ? null : (
+                    <option value={formulario.perroId}>
+                      Referencia histórica no registrada
+                    </option>
+                  )}
+                  {perrosDelCliente.map((perro) => (
+                    <option key={perro.id} value={perro.id}>
+                      {perro.nombre}
+                      {perro.activo ? "" : " (inactivo)"}
+                    </option>
+                  ))}
+                </select>
                 {erroresCampos.perroId ? (
                   <p className="mt-1 text-sm text-red-600">{erroresCampos.perroId}</p>
                 ) : (
                   <p className="mt-1 text-xs text-slate-500">
-                    Clientes y Perros todavía no tienen catálogo. Se conserva como referencia.
+                    Solo se puede crear una cita con un perro activo de un cliente activo.
                   </p>
                 )}
               </div>
@@ -458,7 +537,7 @@ export default function GestionCitas() {
                         {cita.fecha} · {cita.horaInicio} - {cita.horaFinEstimada}
                       </p>
                       <p className="mt-1 text-sm text-slate-600">
-                        Perro: {cita.perroId}
+                        {etiquetaPerro(cita.perroId)}
                       </p>
                       <p className="text-sm text-slate-600">
                         Servicios: {(cita.servicioIds || []).join(", ") || "Sin servicios"}
