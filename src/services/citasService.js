@@ -29,4 +29,8 @@ export const citasService = {
   cambiarEstado(id, estado) {
     return apiClient.patch(`/api/citas/${id}/estado`, { estado });
   },
+
+  finalizar(id, datos) {
+    return apiClient.post(`/api/citas/${id}/finalizar`, datos);
+  },
 };

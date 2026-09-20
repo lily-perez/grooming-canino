@@ -3,7 +3,7 @@ import BotonCerrarSesion from "@/components/autenticacion/BotonCerrarSesion";
 import NavLink from "@/components/shared/NavLink";
 import { obtenerUsuarioAutenticado } from "@/server/autenticacion/autorizacion";
 
-const modulosPendientes = ["Historial", "Reportes"];
+const modulosPendientes = ["Reportes"];
 
 const ACTIVO = "block rounded-lg bg-sky-700 px-3 py-2 font-medium text-white";
 const INACTIVO = "block rounded-lg px-3 py-2 font-medium text-slate-700 hover:bg-slate-100";
@@ -54,6 +54,9 @@ export default async function AdminLayout({ children }) {
             </NavLink>
             <NavLink href="/admin/usuarios" activeClassName={ACTIVO} idleClassName={INACTIVO}>
               Usuarios
+            </NavLink>
+            <NavLink href="/admin/historial" activeClassName={ACTIVO} idleClassName={INACTIVO}>
+              Historial
             </NavLink>
             {modulosPendientes.map((modulo) => (
               <button

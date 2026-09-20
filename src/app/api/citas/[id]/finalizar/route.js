@@ -1,8 +1,34 @@
 import { requerirUsuarioAutenticado } from "@/server/autenticacion/autorizacion";
-import { obtenerCitaPersistida } from "@/server/persistencia/citasAdapter";
+import {
+  cambiarEstadoCitaPersistida,
+  obtenerCitaPersistida,
+} from "@/server/persistencia/citasAdapter";
+import {
+  crearRegistroAtencionPersistido,
+  eliminarRegistroAtencionPersistido,
+} from "@/server/persistencia/historialAdapter";
 import { listarTareasPersistidas } from "@/server/persistencia/tareasAdapter";
 import { citaRelacionadaConGroomer } from "@/server/reglas/validarCita";
-import { crearErrorServidor, respuestaError } from "@/server/respuestas";
+import {
+  asegurarRegistroUnicoPorCita,
+  componerVistasHistorial,
+  extraerObservaciones,
+  fechaRegistroServidor,
+  tieneErroresObservacion,
+} from "@/server/reglas/validarRegistroAtencion";
+import {
+  crearErrorServidor,
+  respuestaError,
+} from "@/server/respuestas";
+
+async function leerCuerpoOpcional(request) {
+  try {
+    const body = await request.json();
+    return body && typeof body === "object" ? body : {};
+  } catch {
+    return {};
+  }
+}
 
 export async function POST(request, { params }) {
   try {
@@ -58,11 +84,62 @@ export async function POST(request, { params }) {
       );
     }
 
-    throw crearErrorServidor(
-      "OPERACION_NO_DISPONIBLE",
-      "La finalización coordinada requiere RegistroAtencion y queda pendiente para un incremento posterior.",
-      409,
-    );
+    await asegurarRegistroUnicoPorCita(cita.id);
+
+    const body = await leerCuerpoOpcional(request);
+    const { datos, erroresCampos } = extraerObservaciones(body);
+
+    if (tieneErroresObservacion(erroresCampos)) {
+      throw crearErrorServidor(
+        "DATOS_INVALIDOS",
+        "Revisa los datos ingresados.",
+        400,
+        erroresCampos,
+      );
+    }
+
+    const registroCreado = await crearRegistroAtencionPersistido({
+      citaId: cita.id,
+      perroId: cita.perroId,
+      registradoPorUsuarioId: usuario.id,
+      ...datos,
+      fecha: fechaRegistroServidor(),
+    });
+
+    let citaActualizada;
+
+    try {
+      citaActualizada = await cambiarEstadoCitaPersistida(
+        cita.id,
+        "completada",
+      );
+
+      if (!citaActualizada) {
+        throw new Error("La cita no pudo actualizarse.");
+      }
+    } catch {
+      try {
+        await eliminarRegistroAtencionPersistido(registroCreado.id);
+      } catch {
+        // La compensación es de mejor esfuerzo.
+      }
+
+      throw crearErrorServidor(
+        "ERROR_PERSISTENCIA",
+        "No fue posible completar la finalización de la cita.",
+        500,
+      );
+    }
+
+    const [registroAtencion] = await componerVistasHistorial([registroCreado]);
+
+    return Response.json({
+      data: {
+        cita: citaActualizada,
+        registroAtencion,
+      },
+      mensaje: "Cita finalizada correctamente.",
+    });
   } catch (error) {
     return respuestaError(error);
   }

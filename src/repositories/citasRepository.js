@@ -25,4 +25,9 @@ export const citasRepository = {
     const respuesta = await citasService.cambiarEstado(id, estado);
     return respuesta.data;
   },
+
+  async finalizar(id, datos) {
+    const respuesta = await citasService.finalizar(id, datos);
+    return respuesta.data;
+  },
 };

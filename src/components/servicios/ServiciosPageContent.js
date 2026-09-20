@@ -9,7 +9,11 @@ import TareaForm from "@/components/TareaForm";
 import ServiciosGrid from "@/components/ServiciosGrid";
 import TareasBreakdown from "@/components/TareasBreakdown";
 import Modal from "@/components/Modal";
+import RegistroAtencionForm, {
+  FORMULARIO_OBSERVACION_INICIAL,
+} from "@/components/historial/RegistroAtencionForm";
 import { IconSearch, IconPlus } from "@/components/icons";
+import { obtenerMensajeError } from "@/utils/errores";
 
 export default function ServiciosPageContent() {
   const { rol } = useAuth();
@@ -28,7 +32,7 @@ export default function ServiciosPageContent() {
     editarTarea,
     cambiarEstadoTarea,
   } = useServicios();
-  const { citas } = useCitas();
+  const { citas, procesando, error: errorCitas, finalizarCita } = useCitas();
 
   const [tab, setTab] = useState("servicios");
   const [busqueda, setBusqueda] = useState("");
@@ -38,6 +42,11 @@ export default function ServiciosPageContent() {
   const [modalServicioAbierto, setModalServicioAbierto] = useState(false);
   const [modalTareaAbierto, setModalTareaAbierto] = useState(false);
   const [guardandoServicio, setGuardandoServicio] = useState(false);
+  const [citaAFinalizar, setCitaAFinalizar] = useState(null);
+  const [formularioFinalizar, setFormularioFinalizar] = useState(
+    FORMULARIO_OBSERVACION_INICIAL,
+  );
+  const [mensajeExitoFinalizar, setMensajeExitoFinalizar] = useState("");
   const guardandoServicioRef = useRef(false);
 
   const serviciosFiltrados = useMemo(() => {
@@ -55,6 +64,30 @@ export default function ServiciosPageContent() {
     if (!q) return tareas;
     return tareas.filter((t) => t.nombre.toLowerCase().includes(q));
   }, [tareas, busqueda]);
+
+  const citasPorFinalizar = useMemo(() => {
+    const porId = new Map(citas.map((cita) => [String(cita.id), cita]));
+    const vistas = [];
+
+    for (const cita of porId.values()) {
+      if (cita.estado !== "en_proceso") {
+        continue;
+      }
+
+      const relacionadas = tareas.filter(
+        (tarea) => String(tarea.citaId) === String(cita.id),
+      );
+
+      if (
+        relacionadas.length > 0 &&
+        relacionadas.every((tarea) => tarea.estado === "completada")
+      ) {
+        vistas.push(cita);
+      }
+    }
+
+    return vistas;
+  }, [citas, tareas]);
 
   function abrirNuevoServicio() {
     if (!esAdmin) return;
@@ -133,6 +166,46 @@ export default function ServiciosPageContent() {
     await cambiarEstadoTarea(tarea.id, estado);
   }
 
+  function abrirFinalizar(cita) {
+    setCitaAFinalizar(cita);
+    setFormularioFinalizar({ ...FORMULARIO_OBSERVACION_INICIAL });
+    setMensajeExitoFinalizar("");
+  }
+
+  function cerrarFinalizar() {
+    if (procesando) {
+      return;
+    }
+
+    setCitaAFinalizar(null);
+    setFormularioFinalizar({ ...FORMULARIO_OBSERVACION_INICIAL });
+  }
+
+  async function manejarFinalizar(event) {
+    event.preventDefault();
+
+    if (!citaAFinalizar) {
+      return;
+    }
+
+    try {
+      const resultado = await finalizarCita(
+        citaAFinalizar.id,
+        formularioFinalizar,
+      );
+
+      if (!resultado?.cita) {
+        return;
+      }
+
+      setCitaAFinalizar(null);
+      setFormularioFinalizar({ ...FORMULARIO_OBSERVACION_INICIAL });
+      setMensajeExitoFinalizar("Cita finalizada correctamente.");
+    } catch {
+      // El hook conserva el error.
+    }
+  }
+
   if (loading) {
     return <p className="text-slate-500">Cargando servicios y tareas...</p>;
   }
@@ -156,6 +229,21 @@ export default function ServiciosPageContent() {
           {error}
         </div>
       )}
+
+      {errorCitas ? (
+        <div className="bg-rose-50 border border-rose-200 text-rose-700 px-5 py-4 rounded-xl max-w-xl">
+          {obtenerMensajeError(errorCitas)}
+        </div>
+      ) : null}
+
+      {mensajeExitoFinalizar ? (
+        <div
+          role="status"
+          className="rounded-xl border border-green-400 bg-green-100 p-4 text-sm text-green-700 max-w-xl"
+        >
+          {mensajeExitoFinalizar}
+        </div>
+      ) : null}
 
       {!esAdmin && (
         <div className="bg-sky-50 border border-sky-200 text-sky-700 text-sm rounded-xl px-4 py-2.5">
@@ -229,6 +317,37 @@ export default function ServiciosPageContent() {
             puedeEditar={esAdmin}
             puedeCambiarEstado
           />
+
+          {citasPorFinalizar.length > 0 ? (
+            <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4">
+              <h3 className="text-sm font-semibold text-slate-800">
+                Citas listas para finalizar
+              </h3>
+              <p className="mt-1 mb-3 text-xs text-slate-500">
+                Todas las tareas visibles de estas citas están completadas.
+              </p>
+              <ul className="space-y-2">
+                {citasPorFinalizar.map((cita) => (
+                  <li
+                    key={cita.id}
+                    className="flex items-center justify-between gap-3 rounded-lg border border-slate-100 px-3 py-2"
+                  >
+                    <span className="text-sm text-slate-700">
+                      {cita.fecha} · {cita.horaInicio} - {cita.horaFinEstimada}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={procesando}
+                      onClick={() => abrirFinalizar(cita)}
+                      className="rounded-lg bg-sky-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-sky-800 disabled:opacity-60"
+                    >
+                      Finalizar cita
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
         </div>
       )}
 
@@ -257,6 +376,24 @@ export default function ServiciosPageContent() {
           </Modal>
         </>
       )}
+
+      <Modal open={Boolean(citaAFinalizar)} onClose={cerrarFinalizar}>
+        <div className="rounded-xl border border-slate-200 bg-white p-6">
+          <h2 className="text-lg font-semibold text-slate-900">Finalizar cita</h2>
+          <p className="mt-1 mb-4 text-sm text-slate-600">
+            Registra las observaciones de la atención. Todos los campos son opcionales.
+          </p>
+          <RegistroAtencionForm
+            formulario={formularioFinalizar}
+            erroresCampos={errorCitas?.erroresCampos || {}}
+            guardando={procesando}
+            textoAccion="Finalizar cita"
+            onChange={setFormularioFinalizar}
+            onSubmit={manejarFinalizar}
+            onCancel={cerrarFinalizar}
+          />
+        </div>
+      </Modal>
     </div>
   );
 }
