@@ -22,6 +22,7 @@ export default function DetallePerro({ perroId }) {
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState(null);
+  const [mensajeExito, setMensajeExito] = useState("");
 
   useEffect(() => {
     let activo = true;
@@ -75,6 +76,7 @@ export default function DetallePerro({ perroId }) {
     const validacion = validarPerro(formulario);
     setErroresCampos(validacion.erroresCampos);
     setError(null);
+    setMensajeExito("");
 
     if (tieneErroresPerro(validacion.erroresCampos)) {
       return;
@@ -92,6 +94,7 @@ export default function DetallePerro({ perroId }) {
         clientes.find((item) => String(item.id) === String(actualizado.clienteId)) ||
           null,
       );
+      setMensajeExito("Perro actualizado correctamente.");
     } catch (errorPeticion) {
       setErroresCampos(errorPeticion.erroresCampos || {});
       setError(errorPeticion);
@@ -107,6 +110,7 @@ export default function DetallePerro({ perroId }) {
 
     setGuardando(true);
     setError(null);
+    setMensajeExito("");
 
     try {
       const actualizado = await perrosRepository.cambiarEstado(
@@ -131,6 +135,14 @@ export default function DetallePerro({ perroId }) {
 
   return (
     <div className="space-y-6">
+      {mensajeExito ? (
+        <div
+          role="status"
+          className="rounded-md border border-green-400 bg-green-100 p-4 text-sm text-green-700"
+        >
+          {mensajeExito}
+        </div>
+      ) : null}
       <ErrorMessage mensaje={error && perro ? obtenerMensajeError(error) : ""} />
 
       <section className="rounded-xl border border-slate-200 bg-white p-6">
