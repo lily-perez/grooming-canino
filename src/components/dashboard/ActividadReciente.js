@@ -43,7 +43,10 @@ export default function ActividadReciente({ items = [], busqueda, onBuscar }) {
             </thead>
             <tbody>
               {filtrados.map((item) => (
-                <tr key={item.id} className="border-b border-gray-100 last:border-0">
+                <tr
+                  key={`${item.tipo}:${item.citaId}:${item.historialId}`}
+                  className="border-b border-gray-100 last:border-0"
+                >
                   <td className="py-2 pr-3 text-gray-800">
                     {item.fecha}
                     {item.hora ? ` · ${item.hora}` : ""}

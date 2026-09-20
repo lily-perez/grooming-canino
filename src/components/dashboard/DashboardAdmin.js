@@ -176,7 +176,7 @@ export default function DashboardAdmin() {
                   </thead>
                   <tbody>
                     {data.proximasCitas.map((cita) => (
-                      <tr key={cita.id} className="border-b border-gray-100 last:border-0">
+                      <tr key={String(cita.id)} className="border-b border-gray-100 last:border-0">
                         <td className="py-2 pr-3 text-gray-800">{cita.fecha}</td>
                         <td className="py-2 pr-3 text-gray-800">
                           {cita.horario}

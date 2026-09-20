@@ -16,7 +16,7 @@ export default function ClientesFrecuentes({ clientes = [] }) {
         </thead>
         <tbody>
           {clientes.map((cliente) => (
-            <tr key={cliente.id} className="border-b border-gray-100 last:border-0">
+            <tr key={String(cliente.id)} className="border-b border-gray-100 last:border-0">
               <td className="py-2 pr-4 text-gray-800">{cliente.nombre}</td>
               <td className="py-2 font-semibold text-gray-800">{cliente.cantidad}</td>
             </tr>

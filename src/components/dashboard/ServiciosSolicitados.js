@@ -10,7 +10,7 @@ export default function ServiciosSolicitados({ servicios = [] }) {
   return (
     <ul className="space-y-3">
       {servicios.map((servicio) => (
-        <li key={servicio.id}>
+        <li key={String(servicio.id)}>
           <div className="mb-1 flex items-center justify-between gap-3 text-sm">
             <span className="font-medium text-gray-800">{servicio.nombre}</span>
             <span className="text-gray-500">{servicio.cantidad}</span>

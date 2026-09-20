@@ -2,79 +2,92 @@
 
 Plataforma web interna para la gestión operativa de un negocio de grooming
 canino. Centraliza clientes, perros, citas, servicios, tareas, disponibilidad
-de Groomers y usuarios.
+de Groomers, historial de atención y un Dashboard administrativo.
 
 Proyecto de la asignatura **DPS941 — Diseño y Programación de Software
-Multiplataforma**. Esta etapa corresponde al **aplicativo web**. La aplicación
+Multiplataforma**. Esta etapa corresponde al aplicativo web. La aplicación
 móvil se desarrollará posteriormente.
 
 ## Objetivo
 
 Reducir la dependencia de WhatsApp, llamadas y agenda física al coordinar
 atenciones. El sistema permite registrar dueños y mascotas, programar citas con
-uno o varios servicios, asignar Groomers mediante tareas y consultar
-disponibilidad real.
+uno o varios servicios, asignar Groomers mediante tareas, consultar
+disponibilidad, finalizar atenciones y revisar métricas operativas.
 
 La solución final contemplará:
 
 - una plataforma web orientada principalmente al Administrador;
 - una aplicación móvil orientada principalmente a los Groomers.
 
-## Estado actual
+## Estado funcional
 
 Etapa 2 — Desarrollo Base del Proyecto Web.
 
-Rama de integración vigente: `integracion`.
+Módulos disponibles:
 
-Ya está implementada la base operativa de autenticación, usuarios, servicios,
-tareas, citas, disponibilidad, horarios, clientes y perros. El Dashboard
-todavía no presenta métricas calculadas y el módulo de RegistroAtencion e
-Historial continúa pendiente de implementación completa.
+- autenticación y roles;
+- usuarios;
+- clientes y perros;
+- servicios;
+- citas y tareas;
+- disponibilidad y horarios de Groomers;
+- Historial / Registro de Atención;
+- Dashboard administrativo.
 
-La ruta raíz redirige a `/login`.
+La ruta `/` redirige a `/login`.
 
-## Funcionalidades
-
-### Implementadas
-
-- Autenticación y roles (registro, login, sesión y rutas protegidas).
-- Gestión administrativa de Usuarios.
-- Catálogo de Servicios.
-- Tareas asociadas a una Cita, con un Groomer por tarea.
-- Citas con múltiples servicios y `horaFinEstimada` calculada.
-- Disponibilidad de Groomers calculada a partir de horarios y ocupaciones.
-- Horarios laborales de cada Groomer.
-- Clientes y Perros, con relación Cliente → Perros.
-- Integración Cliente → Perro → Cita (`Cita.perroId` apunta a un Perro real).
-
-Un **Cliente** registra nombre, teléfono, correo, observaciones y estado
-activo/inactivo.
-
-Un **Perro** pertenece a un Cliente y registra nombre, raza, sexo, fecha de
-nacimiento, observaciones y estado activo/inactivo. La Cita no guarda
-`clienteId`: el Cliente se obtiene a través del Perro.
-
-Una Cita puede incluir varios Servicios. El Groomer se asigna en la Tarea, no
-en la Cita. La disponibilidad se calcula; no se almacena como entidad.
-
-### Pendientes o incompletas
-
-- Registro de atención (`RegistroAtencion`).
-- Historial completo.
-- Adjuntos.
-- Finalización completa de Citas (el endpoint de finalizar existe, pero no
-  crea todavía el registro de atención).
-- Dashboard calculado.
-- Reportes.
-- Vista dedicada `/groomer/tareas` (el Groomer opera hoy desde
-  `/groomer/servicios`).
+Aún no forman parte de esta etapa el módulo de Reportes, los adjuntos, un
+Dashboard calculado para Groomer ni una vista dedicada `/groomer/tareas`. El
+Groomer consulta y actualiza sus tareas desde `/groomer/servicios`.
 
 ## Roles
 
 - **Administrador:** gestiona usuarios, clientes, perros, servicios, citas,
-  horarios y asignaciones.
-- **Groomer:** es un `Usuario` con `rol = groomer`. Consulta y actualiza sus
-  propias tareas. No administra el catálogo general.
+  horarios, asignaciones, historial y Dashboard.
+- **Groomer:** usuario con `rol = groomer`. Consulta y actualiza sus propias
+  tareas. No administra el catálogo general.
+
+## Funcionalidades principales
+
+- Registro, inicio de sesión y rutas protegidas según rol.
+- Gestión de usuarios, clientes, perros, servicios, citas, tareas y horarios.
+- Relación Cliente → Perro → Cita. La cita guarda `perroId`; el cliente se
+  obtiene a través del perro.
+- Citas con uno o varios servicios y `horaFinEstimada` calculada en servidor.
+- Tareas asociadas a una cita, con un Groomer por tarea.
+- Disponibilidad de Groomers calculada a partir de horarios y ocupaciones. No
+  se persiste como entidad.
+
+### Dashboard administrativo
+
+Resumen operativo calculado a partir de citas, tareas, servicios, clientes,
+perros e historial. No se almacena un recurso propio de Dashboard.
+
+Incluye:
+
+- métricas de citas de hoy, de la semana y del mes;
+- filtros **Hoy**, **Semana** y **Mes**;
+- cantidad de citas programadas, en proceso, completadas y canceladas;
+- tareas activas;
+- servicios más solicitados;
+- clientes más frecuentes;
+- gráfico de citas por día;
+- próximas citas;
+- actividad reciente, con búsqueda por cliente o perro.
+
+Endpoint: `GET /api/dashboard/resumen?periodo=hoy|semana|mes`.
+
+### Historial / Registro de Atención
+
+Al finalizar una cita en proceso con todas sus tareas completadas:
+
+- se crea un registro de atención;
+- la cita pasa a estado `completada`;
+- el registro queda disponible en el historial y en su detalle.
+
+El historial es la consulta de esos registros de atención, no una entidad
+adicional. Se persiste en MockAPI `/historial`.
 
 ## Tecnologías
 
@@ -85,15 +98,11 @@ en la Cita. La disponibilidad se calcula; no se almacena como entidad.
 - Context API
 - API REST con Route Handlers de Next.js
 - MockAPI como persistencia temporal del servidor
-- Git y GitHub
-- Vercel
 
-Firebase, Firestore, Prisma, Supabase, Redux, Axios y TypeScript no forman
-parte de esta etapa.
+Esta etapa no utiliza TypeScript, Redux, Axios, Firebase, Firestore, Prisma ni
+Supabase.
 
 ## Arquitectura
-
-Los módulos integrados siguen este flujo:
 
 ```text
 UI
@@ -108,36 +117,35 @@ UI
 → MockAPI
 ```
 
-- El frontend no consume MockAPI de forma directa.
-- `MOCK_API_BASE_URL` se usa únicamente en el servidor.
+- El navegador no consume MockAPI de forma directa.
 - Los services del cliente llaman a la API interna de Next.js (`/api/*`).
-- Los repositories aíslan la lógica del mecanismo de acceso a datos.
-- Los permisos importantes se validan otra vez en los Route Handlers.
+- Los repositories aíslan el acceso a datos.
+- Los permisos se validan en los Route Handlers, no solo en la interfaz.
 
 ## Estructura del proyecto
 
 ```text
 src/
-├── app/                 Rutas web (admin, groomer, login) y Route Handlers
+├── app/                 Rutas web y Route Handlers
 │   ├── admin/
 │   ├── groomer/
 │   └── api/
-├── components/          Interfaz reutilizable y pantallas de cada módulo
-├── context/             Estado compartido (sesión y, cuando aplica, servicios)
-├── hooks/               Coordinación de carga, mutaciones y estados de UI
+├── components/          Interfaz y pantallas de cada módulo
+├── context/             Estado compartido de sesión
+├── hooks/               Carga de datos y estados de UI
 ├── repositories/        Acceso a datos desde el frontend
-├── server/              Autenticación, persistencia y reglas de negocio
+├── server/              Autenticación, persistencia y reglas
 │   ├── autenticacion/
 │   ├── persistencia/
 │   └── reglas/
 ├── services/            Cliente HTTP hacia /api/*
-└── utils/               Validaciones y utilidades compartidas
+└── utils/               Validaciones y utilidades
 ```
 
-## Persistencia temporal
+## Persistencia
 
-MockAPI es la persistencia temporal de la Etapa 2. Los Route Handlers se
-comunican con ella a través de adapters. Recursos actuales:
+MockAPI se usa como persistencia temporal. Los Route Handlers se comunican con
+ella a través de adapters. Recursos actuales:
 
 ```text
 /usuarios
@@ -147,9 +155,27 @@ comunican con ella a través de adapters. Recursos actuales:
 /horarios
 /clientes
 /perros
+/historial
 ```
 
-La disponibilidad no se persiste: se calcula en servidor.
+Relaciones principales:
+
+```text
+Cita.perroId → Perro.id
+Perro.clienteId → Cliente.id
+Cita.servicioIds → Servicio.id
+Tarea.citaId → Cita.id
+Tarea.servicioId → Servicio.id
+Tarea.groomerId → Usuario.id
+```
+
+`/historial` almacena registros de atención. La disponibilidad se calcula en
+servidor.
+
+## Requisitos previos
+
+- Node.js compatible con Next.js 16
+- npm
 
 ## Variables de entorno
 
@@ -159,45 +185,34 @@ Copiar `.env.example` a `.env.local` y completar los valores locales:
 cp .env.example .env.local
 ```
 
-Variables definidas en `.env.example`:
-
 ```text
 MOCK_API_BASE_URL=
 AUTH_SESSION_SECRET=
 ```
 
-No commitear `.env.local` ni secretos. `MOCK_API_BASE_URL` no debe exponerse al
-navegador.
+`MOCK_API_BASE_URL` es privada del servidor. No debe exponerse al navegador ni
+definirse como `NEXT_PUBLIC_*`. No commitear `.env.local` ni secretos.
 
-## Instalación
-
-Requisitos: Node.js compatible con Next.js 16 y npm.
+## Instalación y ejecución
 
 ```bash
 npm install
-```
-
-## Ejecución local
-
-```bash
 npm run dev
 ```
 
-En condiciones normales la aplicación queda en
-[http://localhost:3000](http://localhost:3000). Si el puerto 3000 está ocupado,
-Next.js puede asignar otro.
+La aplicación queda en [http://localhost:3000](http://localhost:3000). Si el
+puerto 3000 está ocupado, Next.js puede asignar otro.
 
-La ruta `/` redirige a `/login`.
-
-## Validaciones técnicas
+## Comandos disponibles
 
 ```bash
-npm run lint
-npm run build
+npm install      # instala dependencias
+npm run dev      # entorno de desarrollo
+npm run lint     # análisis estático
+npm run build    # compilación de producción
 ```
 
-`GET /api/health` comprueba que los Route Handlers responden. No hay una
-batería de pruebas automatizadas de negocio en esta etapa.
+`GET /api/health` comprueba que los Route Handlers responden.
 
 ## Rutas principales
 
@@ -218,6 +233,7 @@ Administrador:
 /admin/groomers
 /admin/clientes
 /admin/perros
+/admin/historial
 ```
 
 Groomer:
@@ -226,9 +242,3 @@ Groomer:
 /groomer/dashboard
 /groomer/servicios
 ```
-
-## Organización del trabajo
-
-Cada integrante desarrolla su módulo en una rama independiente. Los avances se
-integran después en la rama compartida del proyecto (`integracion` en esta
-etapa).
