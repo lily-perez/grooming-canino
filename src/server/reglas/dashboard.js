@@ -61,6 +61,88 @@ function fechaEnRango(fecha, inicio, fin) {
   return fechaValida(fecha) && fecha >= inicio && fecha <= fin;
 }
 
+function idTexto(valor) {
+  if (valor === undefined || valor === null) {
+    return "";
+  }
+
+  return String(valor).trim();
+}
+
+function deduplicarPorClave(items, obtenerClave) {
+  const vistos = new Set();
+  const unicos = [];
+
+  for (const item of items) {
+    const clave = obtenerClave(item);
+
+    if (!clave || vistos.has(clave)) {
+      continue;
+    }
+
+    vistos.add(clave);
+    unicos.push(item);
+  }
+
+  return unicos;
+}
+
+function idCita(cita) {
+  const id = idTexto(cita?.id);
+
+  if (id) {
+    return id;
+  }
+
+  const fecha = idTexto(cita?.fecha);
+  const horaInicio = idTexto(cita?.horaInicio);
+  const perroId = idTexto(cita?.perroId);
+
+  if (!fecha && !horaInicio && !perroId) {
+    return "";
+  }
+
+  return [fecha, horaInicio, perroId].join("|");
+}
+
+function idHistorial(registro) {
+  const id = idTexto(registro?.id);
+
+  if (id) {
+    return id;
+  }
+
+  const citaId = idTexto(registro?.citaId);
+  const perroId = idTexto(registro?.perroId);
+  const fecha = idTexto(registro?.fecha);
+
+  if (!citaId && !perroId && !fecha) {
+    return "";
+  }
+
+  return [citaId, perroId, fecha].join("|");
+}
+
+function claveActividad(tipo, citaId, historialId) {
+  return `${tipo}:${citaId}:${historialId}`;
+}
+
+function indicePorId(items) {
+  const mapa = new Map();
+
+  for (const item of items) {
+    const id = idTexto(item?.id);
+
+    if (!id) {
+      continue;
+    }
+
+    mapa.set(id, item);
+  }
+
+  return mapa;
+}
+
 function citasEnRango(citas, inicio, fin) {
   return citas.filter((cita) => fechaEnRango(cita.fecha, inicio, fin));
 }
@@ -75,14 +157,17 @@ function contarPorEstado(citas) {
 }
 
 function rankingServicios(citas, servicios) {
-  const nombres = new Map(
-    servicios.map((servicio) => [String(servicio.id), servicio.nombre]),
-  );
+  const nombres = indicePorId(servicios);
   const conteo = new Map();
 
   for (const cita of citas) {
     for (const servicioId of cita.servicioIds || []) {
-      const id = String(servicioId);
+      const id = idTexto(servicioId);
+
+      if (!id) {
+        continue;
+      }
+
       conteo.set(id, (conteo.get(id) || 0) + 1);
     }
   }
@@ -90,7 +175,7 @@ function rankingServicios(citas, servicios) {
   return [...conteo.entries()]
     .map(([id, cantidad]) => ({
       id,
-      nombre: nombres.get(id) || `Servicio ${id}`,
+      nombre: nombres.get(id)?.nombre || `Servicio ${id}`,
       cantidad,
     }))
     .sort((a, b) => b.cantidad - a.cantidad || a.nombre.localeCompare(b.nombre))
@@ -98,26 +183,24 @@ function rankingServicios(citas, servicios) {
 }
 
 function rankingClientes(citas, perros, clientes) {
-  const perrosPorId = new Map(perros.map((perro) => [String(perro.id), perro]));
-  const clientesPorId = new Map(
-    clientes.map((cliente) => [String(cliente.id), cliente]),
-  );
+  const perrosPorId = indicePorId(perros);
+  const clientesPorId = indicePorId(clientes);
   const conteo = new Map();
 
   for (const cita of citas) {
-    const perro = perrosPorId.get(String(cita.perroId));
+    const perro = perrosPorId.get(idTexto(cita.perroId));
 
     if (!perro) {
       continue;
     }
 
-    const cliente = clientesPorId.get(String(perro.clienteId));
+    const cliente = clientesPorId.get(idTexto(perro.clienteId));
+    const id = idTexto(cliente?.id);
 
-    if (!cliente) {
+    if (!cliente || !id) {
       continue;
     }
 
-    const id = String(cliente.id);
     const actual = conteo.get(id) || { id, nombre: cliente.nombre, cantidad: 0 };
     actual.cantidad += 1;
     conteo.set(id, actual);
@@ -142,9 +225,9 @@ function formatearHorarioCita(cita) {
 }
 
 function resolverNombres(cita, perrosPorId, clientesPorId) {
-  const perro = perrosPorId.get(String(cita.perroId));
+  const perro = perrosPorId.get(idTexto(cita.perroId));
   const cliente = perro
-    ? clientesPorId.get(String(perro.clienteId))
+    ? clientesPorId.get(idTexto(perro.clienteId))
     : null;
 
   return {
@@ -177,52 +260,79 @@ function actividadReciente(citasPeriodo, registros, perrosPorId, clientesPorId) 
     cancelada: "Cita cancelada",
   };
 
-  const desdeCitas = citasPeriodo.map((cita) => {
-    const nombres = resolverNombres(cita, perrosPorId, clientesPorId);
-    return {
-      id: `cita-${cita.id}`,
-      tipo: "cita",
-      fecha: cita.fecha,
-      hora: cita.horaInicio || "",
-      estado: cita.estado,
-      accion: accionesCita[cita.estado] || "Cita",
-      ...nombres,
-    };
-  });
+  const desdeCitas = citasPeriodo
+    .map((cita) => {
+      if (!cita) {
+        return null;
+      }
 
-  const desdeHistorial = registros.map((registro) => {
-    const perro = perrosPorId.get(String(registro.perroId));
-    const cliente = perro
-      ? clientesPorId.get(String(perro.clienteId))
-      : null;
+      const citaId = idCita(cita);
 
-    return {
-      id: `historial-${registro.id}`,
-      tipo: "historial",
-      fecha: registro.fecha,
-      hora: "",
-      estado: "completada",
-      accion: "Registro de atención",
-      perroNombre: perro?.nombre || "Perro no disponible",
-      clienteNombre: cliente?.nombre || "Cliente no disponible",
-    };
-  });
+      if (!citaId) {
+        return null;
+      }
 
-  return [...desdeCitas, ...desdeHistorial]
-    .sort((a, b) => {
+      return {
+        tipo: "cita",
+        citaId,
+        historialId: "",
+        fecha: cita.fecha,
+        hora: cita.horaInicio || "",
+        estado: cita.estado,
+        accion: accionesCita[cita.estado] || "Cita",
+        ...resolverNombres(cita, perrosPorId, clientesPorId),
+      };
+    })
+    .filter(Boolean);
+
+  const desdeHistorial = registros
+    .map((registro) => {
+      if (!registro) {
+        return null;
+      }
+
+      const historialId = idHistorial(registro);
+      const citaId = idTexto(registro.citaId);
+      const perro = perrosPorId.get(idTexto(registro.perroId));
+      const cliente = perro
+        ? clientesPorId.get(idTexto(perro.clienteId))
+        : null;
+
+      if (!historialId) {
+        return null;
+      }
+
+      return {
+        tipo: "historial",
+        citaId,
+        historialId,
+        fecha: registro.fecha,
+        hora: "",
+        estado: "completada",
+        accion: "Registro de atención",
+        perroNombre: perro?.nombre || "Perro no disponible",
+        clienteNombre: cliente?.nombre || "Cliente no disponible",
+      };
+    })
+    .filter(Boolean);
+
+  return deduplicarPorClave(
+    [...desdeCitas, ...desdeHistorial].sort((a, b) => {
       const porFecha = String(b.fecha).localeCompare(String(a.fecha));
       if (porFecha !== 0) {
         return porFecha;
       }
       return String(b.hora).localeCompare(String(a.hora));
-    })
-    .slice(0, LIMITE_LISTAS);
+    }),
+    (item) => claveActividad(item.tipo, item.citaId, item.historialId),
+  ).slice(0, LIMITE_LISTAS);
 }
 
 function proximasCitas(citas, hoy, perrosPorId, clientesPorId) {
-  return citas
+  const proximas = citas
     .filter(
       (cita) =>
+        cita &&
         fechaValida(cita.fecha) &&
         cita.fecha >= hoy &&
         (cita.estado === "programada" || cita.estado === "en_proceso"),
@@ -235,13 +345,24 @@ function proximasCitas(citas, hoy, perrosPorId, clientesPorId) {
       return String(a.horaInicio).localeCompare(String(b.horaInicio));
     })
     .slice(0, LIMITE_LISTAS)
-    .map((cita) => ({
-      id: cita.id,
-      fecha: cita.fecha,
-      horario: formatearHorarioCita(cita),
-      estado: cita.estado,
-      ...resolverNombres(cita, perrosPorId, clientesPorId),
-    }));
+    .map((cita) => {
+      const id = idCita(cita);
+
+      if (!id) {
+        return null;
+      }
+
+      return {
+        id,
+        fecha: cita.fecha,
+        horario: formatearHorarioCita(cita),
+        estado: cita.estado,
+        ...resolverNombres(cita, perrosPorId, clientesPorId),
+      };
+    })
+    .filter(Boolean);
+
+  return deduplicarPorClave(proximas, (cita) => cita.id);
 }
 
 export function normalizarPeriodoDashboard(valor) {
@@ -266,7 +387,7 @@ export async function calcularResumenDashboard(periodoSolicitado) {
   const inicioSemana = rangoDelPeriodo("semana", hoy);
   const inicioMes = rangoDelPeriodo("mes", hoy);
 
-  const [citas, tareas, servicios, clientes, perros, registros] =
+  const [citasCrudas, tareasCrudas, serviciosCrudos, clientesCrudos, perrosCrudos, registrosCrudos] =
     await Promise.all([
       listarCitasPersistidas(),
       listarTareasPersistidas(),
@@ -276,6 +397,13 @@ export async function calcularResumenDashboard(periodoSolicitado) {
       listarRegistrosAtencionPersistidos(),
     ]);
 
+  const citas = citasCrudas.filter(Boolean);
+  const tareas = tareasCrudas.filter(Boolean);
+  const servicios = serviciosCrudos.filter(Boolean);
+  const clientes = clientesCrudos.filter(Boolean);
+  const perros = perrosCrudos.filter(Boolean);
+  const registros = registrosCrudos.filter(Boolean);
+
   const citasHoy = citasEnRango(citas, hoy, hoy);
   const citasSemana = citasEnRango(citas, inicioSemana.inicio, inicioSemana.fin);
   const citasMes = citasEnRango(citas, inicioMes.inicio, inicioMes.fin);
@@ -284,10 +412,8 @@ export async function calcularResumenDashboard(periodoSolicitado) {
     fechaEnRango(registro.fecha, inicio, fin),
   );
   const estados = contarPorEstado(citasPeriodo);
-  const perrosPorId = new Map(perros.map((perro) => [String(perro.id), perro]));
-  const clientesPorId = new Map(
-    clientes.map((cliente) => [String(cliente.id), cliente]),
-  );
+  const perrosPorId = indicePorId(perros);
+  const clientesPorId = indicePorId(clientes);
 
   return {
     periodo,
