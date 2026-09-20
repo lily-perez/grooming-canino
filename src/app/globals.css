@@ -19,3 +19,22 @@ body {
   background: var(--background);
   color: var(--foreground);
 }
+
+@media print {
+  header,
+  aside,
+  nav,
+  .no-imprimir {
+    display: none !important;
+  }
+
+  body,
+  main {
+    background: white !important;
+  }
+
+  main {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+}
