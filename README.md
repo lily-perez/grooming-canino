@@ -1,8 +1,13 @@
 #Integrantes
-Manuel Alejandro Mejia López - ML251320 
-Lily Astrid Pérez Avelar - PA251527 
-Ariel Omar Nunfio Méndez - NM253359 
-Levi Asael Valle Palma - VP253612 
+
+Manuel Alejandro Mejia López - ML251320
+
+Lily Astrid Pérez Avelar - PA251527
+
+Ariel Omar Nunfio Méndez - NM253359
+
+Levi Asael Valle Palma - VP253612
+
 Wilber Larris Carranza Campos - CC253652
 
 # Sistema Multiplataforma de Gestión de Grooming Canino
