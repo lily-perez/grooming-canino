@@ -1,27 +1,32 @@
 import { StyleSheet, Text, View } from 'react-native';
 
+import PrimaryButton from '../components/PrimaryButton';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 
-export default function HomeScreen() {
+export default function HomeScreen({ navigation }) {
   return (
     <View style={styles.container}>
-      <View style={styles.logo}>
-        <Text style={styles.logoText}>🐾</Text>
-      </View>
-
-      <Text style={styles.title}>Grooming Canino</Text>
+      <Text style={styles.title}>Inicio</Text>
 
       <Text style={styles.subtitle}>
-        Aplicación móvil para Groomers
+        Bienvenida a Grooming Canino
       </Text>
 
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Inicio</Text>
+        <Text style={styles.cardTitle}>Módulos principales</Text>
 
         <Text style={styles.cardText}>
-          Base móvil preparada para integrar los módulos del proyecto.
+          Desde aquí el Groomer podrá acceder a sus citas, tareas,
+          clientes e historial.
         </Text>
+
+        <View style={styles.buttonContainer}>
+          <PrimaryButton
+            title="Ver citas"
+            onPress={() => navigation.navigate('Citas')}
+          />
+        </View>
       </View>
     </View>
   );
@@ -31,27 +36,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    alignItems: 'center',
+    padding: spacing.lg,
     justifyContent: 'center',
-    paddingHorizontal: spacing.lg,
-  },
-
-  logo: {
-    width: 86,
-    height: 86,
-    borderRadius: 43,
-    backgroundColor: colors.primaryLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.lg,
-  },
-
-  logoText: {
-    fontSize: 42,
   },
 
   title: {
-    fontSize: 28,
+    fontSize: 30,
     fontWeight: '700',
     color: colors.textPrimary,
     marginBottom: spacing.sm,
@@ -64,11 +54,9 @@ const styles = StyleSheet.create({
   },
 
   card: {
-    width: '100%',
     backgroundColor: colors.surface,
     borderRadius: 18,
     padding: spacing.lg,
-    alignItems: 'center',
     elevation: 3,
   },
 
@@ -81,8 +69,11 @@ const styles = StyleSheet.create({
 
   cardText: {
     fontSize: 15,
-    color: colors.textSecondary,
-    textAlign: 'center',
     lineHeight: 22,
+    color: colors.textSecondary,
+  },
+
+  buttonContainer: {
+    marginTop: spacing.lg,
   },
 });
