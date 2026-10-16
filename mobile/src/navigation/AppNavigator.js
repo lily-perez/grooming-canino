@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import HomeScreen from '../screens/HomeScreen';
 import CitasScreen from '../screens/CitasScreen';
 import DetalleCitaScreen from '../screens/DetalleCitaScreen';
+import HistorialScreen from '../screens/HistorialScreen'; 
 
 const Stack = createNativeStackNavigator();
 
@@ -32,6 +33,13 @@ export default function AppNavigator() {
           name="DetalleCita"
           component={DetalleCitaScreen}
           options={{ title: 'Detalle de cita' }}
+        />
+
+        {}
+        <Stack.Screen
+          name="Historial"
+          component={HistorialScreen}
+          options={{ title: 'Registrar Atención' }}
         />
       </Stack.Navigator>
     </NavigationContainer>
