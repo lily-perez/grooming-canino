@@ -26,6 +26,13 @@ export default function HomeScreen({ navigation }) {
             title="Ver citas"
             onPress={() => navigation.navigate('Citas')}
           />
+          
+          <View style={styles.spacer} />
+
+          <PrimaryButton
+            title="Clientes y Perros"
+            onPress={() => navigation.navigate('Clientes')}
+          />
         </View>
 
         <View style={styles.buttonContainer}>
@@ -44,7 +51,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
     padding: spacing.lg,
-    justifyContent: 'center',
+    justify: 'center',
   },
 
   title: {
@@ -82,5 +89,9 @@ const styles = StyleSheet.create({
 
   buttonContainer: {
     marginTop: spacing.lg,
+  },
+
+  spacer: {
+    height: spacing.md,
   },
 });

@@ -10,6 +10,8 @@ import CitasScreen from '../screens/CitasScreen';
 import DetalleCitaScreen from '../screens/DetalleCitaScreen';
 import TareasScreen from '../screens/TareasScreen';
 import DetalleTareaScreen from '../screens/DetalleTareaScreen';
+import ClientesScreen from '../screens/ClientesScreen';
+import DetalleClientePerroScreen from '../screens/DetalleClientePerroScreen';
 import { colors } from '../theme/colors';
 
 const Stack = createNativeStackNavigator();
@@ -28,7 +30,6 @@ function Rutas() {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        
         screenOptions={{
           headerShown: true,
         }}
@@ -70,6 +71,18 @@ function Rutas() {
               name="DetalleTarea"
               component={DetalleTareaScreen}
               options={{ title: 'Detalle de tarea' }}
+            />
+
+            <Stack.Screen
+              name="Clientes"
+              component={ClientesScreen}
+              options={{ title: 'Clientes y Perros' }}
+            />
+
+            <Stack.Screen
+              name="DetalleClientePerro"
+              component={DetalleClientePerroScreen}
+              options={{ title: 'Expediente del Cliente' }}
             />
           </>
         ) : (
