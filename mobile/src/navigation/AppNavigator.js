@@ -5,6 +5,8 @@ import HomeScreen from '../screens/HomeScreen';
 import CitasScreen from '../screens/CitasScreen';
 import DetalleCitaScreen from '../screens/DetalleCitaScreen';
 import HistorialScreen from '../screens/HistorialScreen'; 
+import ClientesScreen from '../screens/ClientesScreen';
+import DetalleClientePerroScreen from '../screens/DetalleClientePerroScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -34,12 +36,21 @@ export default function AppNavigator() {
           component={DetalleCitaScreen}
           options={{ title: 'Detalle de cita' }}
         />
-
-        {}
         <Stack.Screen
           name="Historial"
           component={HistorialScreen}
           options={{ title: 'Registrar Atención' }}
+          />
+        <Stack.Screen
+          name="Clientes"
+          component={ClientesScreen}
+          options={{ title: 'Clientes y Perros' }}
+        />
+
+        <Stack.Screen
+          name="DetalleClientePerro"
+          component={DetalleClientePerroScreen}
+          options={{ title: 'Expediente del Cliente' }}
         />
       </Stack.Navigator>
     </NavigationContainer>

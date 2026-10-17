@@ -17,6 +17,20 @@ export default function HomeScreen({ navigation }) {
         <Text style={styles.subtitle}>
           Tienes {tareasHoy.length} tareas asignadas para hoy
         </Text>
+
+        <View style={styles.buttonContainer}>
+          <PrimaryButton
+            title="Ver citas"
+            onPress={() => navigation.navigate('Citas')}
+          />
+          
+          <View style={styles.spacer} />
+
+          <PrimaryButton
+            title="Clientes y Perros"
+            onPress={() => navigation.navigate('Clientes')}
+          />
+        </View>
       </View>
 
       <Text style={styles.sectionTitle}>Próximas Atenciones</Text>
@@ -49,6 +63,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
     padding: spacing.lg,
+    justify: 'center',
   },
   header: {
     marginTop: spacing.xl,
@@ -105,5 +120,9 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     marginTop: spacing.md,
+  },
+
+  spacer: {
+    height: spacing.md,
   },
 });
