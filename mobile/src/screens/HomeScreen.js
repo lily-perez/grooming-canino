@@ -27,6 +27,13 @@ export default function HomeScreen({ navigation }) {
             onPress={() => navigation.navigate('Citas')}
           />
         </View>
+
+        <View style={styles.buttonContainer}>
+          <PrimaryButton
+            title="Mis tareas"
+            onPress={() => navigation.navigate('Tareas')}
+          />
+        </View>
       </View>
     </View>
   );
