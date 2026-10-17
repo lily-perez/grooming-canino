@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, TextInput, Alert, Image, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TextInput, Alert, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import PrimaryButton from '../components/PrimaryButton';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 
+import { useHistorial } from '../context/HistorialContext';
+
 export default function HistorialScreen({ route, navigation }) {
   const { perro } = route.params || { perro: 'Mascota' };
+
+  const { registrarAtencion, estaGuardando } = useHistorial();
 
   const [pelaje, setPelaje] = useState('');
   const [comportamiento, setComportamiento] = useState('');
@@ -15,11 +19,8 @@ export default function HistorialScreen({ route, navigation }) {
   const [dientes, setDientes] = useState('');
   const [unas, setUnas] = useState('');
   const [notas, setNotas] = useState('');
-  
-  // estado para guardar la URI de la imagen seleccionada
   const [imagenUri, setImagenUri] = useState(null);
 
-  // Función para abrir la galería
   const seleccionarImagen = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
@@ -33,12 +34,31 @@ export default function HistorialScreen({ route, navigation }) {
     }
   };
 
-  const handleGuardar = () => {
-    Alert.alert(
-      "Registro Exitoso", 
-      `Se ha guardado el historial de ${perro} con su fotografía.`,
-      [{ text: "OK", onPress: () => navigation.goBack() }]
-    );
+  const handleGuardar = async () => {
+    const datosAtencion = {
+      nombrePerro: perro,
+      evaluacion: {
+        pelaje,
+        comportamiento,
+        ojos,
+        oidos,
+        dientes,
+        unas,
+      },
+      notasAdicionales: notas,
+    };
+
+    const resultado = await registrarAtencion(datosAtencion, imagenUri);
+
+    if (resultado.exito) {
+      Alert.alert(
+        "Registro Exitoso", 
+        `Se ha guardado el historial de ${perro}.`,
+        [{ text: "OK", onPress: () => navigation.goBack() }]
+      );
+    } else {
+      Alert.alert("Error", "Hubo un problema al guardar el registro.");
+    }
   };
 
   return (
@@ -76,14 +96,17 @@ export default function HistorialScreen({ route, navigation }) {
             {imagenUri ? 'Cambiar Fotografía' : 'Seleccionar Fotografía'}
           </Text>
         </TouchableOpacity>
-        
         {imagenUri && (
           <Image source={{ uri: imagenUri }} style={styles.imagePreview} />
         )}
       </View>
 
       <View style={styles.buttonContainer}>
-        <PrimaryButton title="Guardar Registro" onPress={handleGuardar} />
+        {estaGuardando ? (
+          <ActivityIndicator size="large" color={colors.primary} />
+        ) : (
+          <PrimaryButton title="Guardar Registro" onPress={handleGuardar} />
+        )}
       </View>
       <View style={{height: 40}} /> 
     </ScrollView>
@@ -99,27 +122,7 @@ const styles = StyleSheet.create({
   input: { backgroundColor: colors.surface, borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 8, padding: spacing.md, fontSize: 15, marginBottom: spacing.sm, color: colors.textPrimary },
   textArea: { height: 100, textAlignVertical: 'top' },
   buttonContainer: { marginTop: spacing.md, marginBottom: spacing.xl },
-  
-  imageButton: {
-    backgroundColor: '#E0F2F1', 
-    padding: spacing.md,
-    borderRadius: 8,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.primary,
-    borderStyle: 'dashed',
-    marginBottom: spacing.sm,
-  },
-  imageButtonText: {
-    color: colors.primary,
-    fontWeight: '600',
-    fontSize: 15,
-  },
-  imagePreview: {
-    width: '100%',
-    height: 200,
-    borderRadius: 8,
-    marginTop: spacing.sm,
-    resizeMode: 'cover',
-  }
+  imageButton: { backgroundColor: '#E0F2F1', padding: spacing.md, borderRadius: 8, alignItems: 'center', borderWidth: 1, borderColor: colors.primary, borderStyle: 'dashed', marginBottom: spacing.sm },
+  imageButtonText: { color: colors.primary, fontWeight: '600', fontSize: 15 },
+  imagePreview: { width: '100%', height: 200, borderRadius: 8, marginTop: spacing.sm, resizeMode: 'cover' }
 });
