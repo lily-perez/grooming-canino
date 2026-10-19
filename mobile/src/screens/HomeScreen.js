@@ -34,6 +34,13 @@ export default function HomeScreen({ navigation }) {
             onPress={() => navigation.navigate('Clientes')}
           />
         </View>
+
+        <View style={styles.buttonContainer}>
+          <PrimaryButton
+            title="Mis tareas"
+            onPress={() => navigation.navigate('Tareas')}
+          />
+        </View>
       </View>
     </View>
   );
