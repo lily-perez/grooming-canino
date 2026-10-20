@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useAuth } from './AuthContext';
 import {
@@ -10,45 +10,112 @@ const TareasContext = createContext(null);
 
 export function TareasProvider({ children }) {
   const { usuario } = useAuth();
-  const [tareas, setTareas] = useState([]);
+  const esGroomer = usuario?.rol === 'groomer';
+  const usuarioId = esGroomer ? String(usuario.id) : null;
+  const solicitud = useRef(0);
+  const [origenId, setOrigenId] = useState(null);
+  const [tareasGuardadas, setTareasGuardadas] = useState([]);
   const [cargando, setCargando] = useState(false);
-  const [error, setError] = useState(null);
+  const [errorGuardado, setErrorGuardado] = useState(null);
+  const vista = useMemo(() => {
+    const vigentes = origenId !== null && origenId === usuarioId;
+
+    return {
+      tareas: vigentes ? tareasGuardadas : [],
+      error: vigentes ? errorGuardado : null,
+      cargando: Boolean(usuarioId) && (!vigentes || cargando),
+    };
+  }, [origenId, usuarioId, tareasGuardadas, errorGuardado, cargando]);
 
   const recargar = useCallback(async () => {
+    if (!usuarioId) {
+      return;
+    }
+
+    const actual = ++solicitud.current;
+    const id = usuarioId;
+
     setCargando(true);
-    setError(null);
+    setErrorGuardado(null);
 
     try {
-      setTareas(await obtenerMisTareas());
+      const lista = await obtenerMisTareas();
+
+      if (solicitud.current !== actual) {
+        return;
+      }
+
+      setOrigenId(id);
+      setTareasGuardadas(lista);
     } catch (e) {
-      setError(e.message);
+      if (solicitud.current !== actual) {
+        return;
+      }
+
+      setOrigenId(id);
+      setErrorGuardado(e.message);
     } finally {
-      setCargando(false);
+      if (solicitud.current === actual) {
+        setCargando(false);
+      }
     }
-  }, []);
+  }, [usuarioId]);
 
   useEffect(() => {
-    if (usuario) {
-      recargar();
-    } else {
-      setTareas([]);
-      setError(null);
+    if (!usuarioId) {
+      return undefined;
     }
-  }, [usuario, recargar]);
+
+    const actual = ++solicitud.current;
+    const id = usuarioId;
+
+    obtenerMisTareas()
+      .then((lista) => {
+        if (solicitud.current !== actual) {
+          return;
+        }
+
+        setOrigenId(id);
+        setTareasGuardadas(lista);
+        setErrorGuardado(null);
+        setCargando(false);
+      })
+      .catch((e) => {
+        if (solicitud.current !== actual) {
+          return;
+        }
+
+        setOrigenId(id);
+        setErrorGuardado(e.message);
+        setCargando(false);
+      });
+
+    return () => {
+      if (solicitud.current === actual) {
+        solicitud.current += 1;
+      }
+    };
+  }, [usuarioId]);
 
   // Lanza el error si el servidor rechaza el cambio; la pantalla lo muestra.
   const cambiarEstado = useCallback(async (tareaId, estado) => {
     const actualizada = await actualizarEstadoTarea(tareaId, estado);
     const nuevoEstado = actualizada?.estado ?? estado;
 
-    setTareas((prev) =>
+    setTareasGuardadas((prev) =>
       prev.map((t) => (t.id === tareaId ? { ...t, estado: nuevoEstado } : t)),
     );
   }, []);
 
   const value = useMemo(
-    () => ({ tareas, cargando, error, recargar, cambiarEstado }),
-    [tareas, cargando, error, recargar, cambiarEstado],
+    () => ({
+      tareas: vista.tareas,
+      cargando: vista.cargando,
+      error: vista.error,
+      recargar,
+      cambiarEstado,
+    }),
+    [vista, recargar, cambiarEstado],
   );
 
   return (

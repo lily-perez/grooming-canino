@@ -44,6 +44,10 @@ export async function solicitarMockApi(ruta, opciones = {}) {
   }
 
   if (!response.ok) {
+    console.error(
+      `Persistencia rechazó ${ruta} con HTTP ${response.status}.`,
+    );
+
     throw crearErrorServidor(
       "ERROR_PERSISTENCIA",
       "La persistencia temporal rechazó la operación.",
