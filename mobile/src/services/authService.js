@@ -23,7 +23,8 @@ export async function obtenerUsuarioActual() {
 export async function cerrarSesionApi() {
   try {
     await apiPost('/api/autenticacion/cerrar-sesion');
+    return true;
   } catch {
-    // si falla, igual se limpia la sesión local
+    return false;
   }
 }

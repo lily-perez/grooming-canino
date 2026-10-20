@@ -6,8 +6,10 @@ import { useAuth } from '../context/AuthContext';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 
+const CORREO_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export default function LoginScreen() {
-  const { iniciarSesion } = useAuth();
+  const { iniciarSesion, aviso } = useAuth();
   const [correo, setCorreo] = useState('');
   const [contrasena, setContrasena] = useState('');
   const [error, setError] = useState('');
@@ -20,6 +22,11 @@ export default function LoginScreen() {
 
     if (!correo.trim() || !contrasena) {
       setError('Ingresa tu correo y contraseña.');
+      return;
+    }
+
+    if (!CORREO_REGEX.test(correo.trim().toLowerCase())) {
+      setError('Ingresa un correo válido.');
       return;
     }
 
@@ -38,7 +45,9 @@ export default function LoginScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Grooming Canino</Text>
-      <Text style={styles.subtitle}>Inicia sesión como Groomer</Text>
+      <Text style={styles.subtitle}>
+        Inicia sesión como administrador o groomer
+      </Text>
 
       <View style={styles.card}>
         <Text style={styles.label}>Correo</Text>
@@ -64,7 +73,9 @@ export default function LoginScreen() {
           placeholderTextColor={colors.textSecondary}
         />
 
-        {!!error && <Text style={styles.error}>{error}</Text>}
+        {!!(error || aviso) && (
+          <Text style={styles.error}>{error || aviso}</Text>
+        )}
 
         <View style={styles.buttonContainer}>
           <PrimaryButton

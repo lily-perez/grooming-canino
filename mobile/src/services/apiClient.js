@@ -1,5 +1,17 @@
 import { API_URL } from '../config';
 
+let alPerderSesion = null;
+
+export function registrarPerdidaDeSesion(callback) {
+  alPerderSesion = callback;
+
+  return () => {
+    if (alPerderSesion === callback) {
+      alPerderSesion = null;
+    }
+  };
+}
+
 export class ErrorApi extends Error {
   constructor(mensaje, status = 0, detalle = null) {
     super(mensaje);
@@ -47,6 +59,13 @@ async function solicitar(ruta, opciones = {}) {
   }
 
   if (!respuesta.ok) {
+    const esLogin = ruta.includes('/api/autenticacion/login');
+    const esCierre = ruta.includes('/api/autenticacion/cerrar-sesion');
+
+    if (respuesta.status === 401 && !esLogin && !esCierre) {
+      alPerderSesion?.();
+    }
+
     throw new ErrorApi(
       extraerMensaje(json) ?? `Error del servidor (${respuesta.status}).`,
       respuesta.status,
