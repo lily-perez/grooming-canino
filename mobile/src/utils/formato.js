@@ -8,6 +8,8 @@ export const ETIQUETA_ESTADO = {
   pendiente: 'Pendiente',
   en_proceso: 'En proceso',
   completada: 'Completada',
+  programada: 'Programada',
+  cancelada: 'Cancelada',
 };
 
 const MESES = [

@@ -1,4 +1,4 @@
-import { apiGet, apiPatch } from './apiClient';
+import { apiGet, apiPatch, apiPost } from './apiClient';
 import { formatearFecha, nombreCompleto } from '../utils/formato';
 
 function mapaPorId(lista) {
@@ -50,19 +50,31 @@ export async function obtenerMisTareas() {
 
       return {
         id: String(tarea.id),
-        citaId: String(tarea.citaId),
-        nombre: tarea.nombre,
-        servicio: servicio?.nombre ?? 'Servicio',
-        estado: tarea.estado,
-        horaInicio: tarea.horaInicio,
-        horaFin: tarea.horaFin,
-        observaciones: tarea.observaciones,
+        citaId: cita ? String(cita.id) : String(tarea.citaId ?? ''),
+        citaEncontrada: Boolean(cita),
+        nombre: tarea.nombre ?? '',
+        servicio: servicio?.nombre ?? '',
+        duracionMinutos: Number(servicio?.duracionEstimadaMinutos) || 0,
+        estado: tarea.estado ?? '',
+        horaInicio: tarea.horaInicio ?? '',
+        horaFin: tarea.horaFin ?? '',
+        observaciones: tarea.observaciones ?? '',
         fecha: cita?.fecha ?? '',
         fechaTexto: formatearFecha(cita?.fecha),
         citaEstado: cita?.estado ?? '',
-        perro: perro?.nombre ?? 'Mascota',
+        citaHoraInicio: cita?.horaInicio ?? '',
+        citaHoraFin: cita?.horaFinEstimada ?? '',
+        citaObservaciones: cita?.observaciones ?? '',
+        perroId: perro?.id ? String(perro.id) : '',
+        perro: perro?.nombre ?? '',
         raza: perro?.raza ?? '',
-        cliente: nombreCompleto(cliente) || 'Cliente',
+        sexo: perro?.sexo ?? '',
+        fechaNacimiento: perro?.fechaNacimiento ?? '',
+        notasPerro: perro?.observaciones ?? '',
+        clienteId: cliente?.id ? String(cliente.id) : '',
+        cliente: nombreCompleto(cliente),
+        telefono: cliente?.telefono ?? '',
+        correo: cliente?.correo ?? '',
       };
     })
     .sort((a, b) =>
@@ -74,4 +86,11 @@ export async function actualizarEstadoTarea(tareaId, estado) {
   return apiPatch(`/api/tareas/${encodeURIComponent(tareaId)}/estado`, {
     estado,
   });
+}
+
+export async function finalizarCita(citaId, observaciones) {
+  return apiPost(
+    `/api/citas/${encodeURIComponent(citaId)}/finalizar`,
+    observaciones,
+  );
 }

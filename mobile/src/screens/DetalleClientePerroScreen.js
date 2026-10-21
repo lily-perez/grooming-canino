@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { 
   StyleSheet, 
   Text, 
@@ -7,8 +7,30 @@ import {
   SafeAreaView 
 } from 'react-native';
 
+import { useTareas } from '../context/TareasContext';
+import { clientesDesdeTareas } from '../utils/vistasGroomer';
+
 export default function DetalleClientePerroScreen({ route }) {
-  const { cliente } = route.params;
+  const { clienteId } = route.params ?? {};
+  const { tareas } = useTareas();
+  const cliente = useMemo(
+    () => clientesDesdeTareas(tareas).find((item) => item.id === String(clienteId)),
+    [tareas, clienteId],
+  );
+  const perros = Array.isArray(cliente?.perros) ? cliente.perros : [];
+
+  if (!cliente) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.scroll}>
+          <Text style={styles.tituloSeccion}>Cliente no encontrado</Text>
+          <Text style={styles.label}>
+            No está entre los clientes relacionados con tus tareas.
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -19,8 +41,8 @@ export default function DetalleClientePerroScreen({ route }) {
           <Text style={styles.tituloSeccion}>Información del Cliente</Text>
           <View style={styles.cardInfo}>
             <Text style={styles.nombreCliente}>{cliente.nombre}</Text>
-            <Text style={styles.label}>Teléfono: <Text style={styles.valor}>{cliente.telefono}</Text></Text>
-            <Text style={styles.label}>Correo: <Text style={styles.valor}>{cliente.email}</Text></Text>
+            <Text style={styles.label}>Teléfono: <Text style={styles.valor}>{cliente.telefono || 'Sin teléfono'}</Text></Text>
+            <Text style={styles.label}>Correo: <Text style={styles.valor}>{cliente.correo || 'Sin correo'}</Text></Text>
           </View>
         </View>
 
@@ -28,19 +50,28 @@ export default function DetalleClientePerroScreen({ route }) {
         <View style={styles.seccion}>
           <Text style={styles.tituloSeccion}>Expediente de Mascotas (Perros)</Text>
           
-          {cliente.perros.map((perro) => (
+          {perros.length === 0 ? (
+            <Text style={styles.label}>No hay perros relacionados con tus tareas.</Text>
+          ) : perros.map((perro) => (
             <View key={perro.id} style={styles.cardPerro}>
               <View style={styles.headerPerro}>
-                <Text style={styles.nombrePerro}>🐶 {perro.nombre}</Text>
-                <Text style={styles.badgeRaza}>{perro.raza}</Text>
+                <Text style={styles.nombrePerro}>{perro.nombre || 'Sin nombre'}</Text>
+                {!!perro.raza && <Text style={styles.badgeRaza}>{perro.raza}</Text>}
               </View>
-              
-              <Text style={styles.label}>Edad: <Text style={styles.valor}>{perro.edad}</Text></Text>
-              
-              <View style={styles.contenedorNotas}>
-                <Text style={styles.tituloNotas}>Notas médicas / Grooming:</Text>
-                <Text style={styles.textoNotas}>{perro.notas}</Text>
-              </View>
+
+              {!!perro.sexo && (
+                <Text style={styles.label}>Sexo: <Text style={styles.valor}>{perro.sexo}</Text></Text>
+              )}
+              <Text style={styles.label}>
+                Nacimiento: <Text style={styles.valor}>{perro.fechaNacimiento || 'Sin fecha'}</Text>
+              </Text>
+
+              {!!perro.notas && (
+                <View style={styles.contenedorNotas}>
+                  <Text style={styles.tituloNotas}>Observaciones:</Text>
+                  <Text style={styles.textoNotas}>{perro.notas}</Text>
+                </View>
+              )}
             </View>
           ))}
         </View>

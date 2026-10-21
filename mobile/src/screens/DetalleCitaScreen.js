@@ -1,11 +1,37 @@
+import { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import EstadoBadge from '../components/EstadoBadge';
 import PrimaryButton from '../components/PrimaryButton';
+import { useAuth } from '../context/AuthContext';
+import { useTareas } from '../context/TareasContext';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
+import { ETIQUETA_ESTADO } from '../utils/formato';
+import { citasDesdeTareas, serviciosDeCita } from '../utils/vistasGroomer';
 
 export default function DetalleCitaScreen({ navigation, route }) {
-  const { cita } = route.params;
+  const { citaId } = route.params ?? {};
+  const { usuario } = useAuth();
+  const { tareas } = useTareas();
+  const cita = useMemo(
+    () => citasDesdeTareas(tareas).find((item) => item.id === String(citaId)),
+    [tareas, citaId],
+  );
+
+  if (!cita) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>Cita no encontrada</Text>
+        <Text style={styles.petBreed}>
+          No está entre las citas recuperadas de tus tareas.
+        </Text>
+      </View>
+    );
+  }
+
+  const servicios = serviciosDeCita(cita);
+  const horario = [cita.horaInicio, cita.horaFin].filter(Boolean).join(' - ');
 
   return (
     <ScrollView
@@ -24,41 +50,45 @@ export default function DetalleCitaScreen({ navigation, route }) {
         <Text style={styles.value}>{cita.cliente}</Text>
 
         <Text style={styles.label}>Groomer asignado</Text>
-        <Text style={styles.value}>{cita.groomer}</Text>
+        <Text style={styles.value}>{usuario?.nombre || 'Sin nombre'}</Text>
 
         <Text style={styles.label}>Servicio</Text>
-        <Text style={styles.value}>{cita.servicio}</Text>
-
-        <Text style={styles.secondaryValue}>
-          Duración estimada: {cita.duracion}
+        <Text style={styles.value}>
+          {servicios.length > 0 ? servicios.join(', ') : 'Sin servicio'}
         </Text>
 
         <Text style={styles.label}>Fecha</Text>
         <Text style={styles.value}>{cita.fechaTexto}</Text>
 
         <Text style={styles.label}>Horario</Text>
-        <Text style={styles.value}>
-          {cita.horaInicio} - {cita.horaFin}
-        </Text>
+        <Text style={styles.value}>{horario || 'Sin horario'}</Text>
 
-        <Text style={styles.label}>Estado</Text>
+        <Text style={styles.label}>Estado de la cita</Text>
 
         <View style={styles.status}>
-          <Text style={styles.statusText}>{cita.estado}</Text>
+          <EstadoBadge estado={cita.estado || 'sin estado'} />
         </View>
 
-        <Text style={styles.label}>Tarea asignada</Text>
+        <Text style={styles.label}>Tareas asignadas</Text>
 
-        <View style={styles.task}>
-          <Text style={styles.taskTitle}>{cita.tarea}</Text>
+        {cita.tareas.map((tarea) => (
+          <View key={tarea.id} style={styles.task}>
+            <Text style={styles.taskTitle}>{tarea.nombre || 'Sin nombre'}</Text>
+            <Text style={styles.taskText}>
+              {[tarea.horaInicio, tarea.horaFin].filter(Boolean).join(' - ') ||
+                'Sin horario'}
+            </Text>
+            <Text style={styles.taskStatus}>
+              Tarea: {ETIQUETA_ESTADO[tarea.estado] ?? (tarea.estado || 'Sin estado')}
+            </Text>
+          </View>
+        ))}
 
-          <Text style={styles.taskText}>
-            {cita.horaInicio} - {cita.horaFin}
-          </Text>
-
-          <Text style={styles.taskStatus}>
-            {cita.estadoTarea}
-          </Text>
+        <View style={styles.buttonContainer}>
+          <PrimaryButton
+            title="Registrar atención"
+            onPress={() => navigation.navigate('Historial', { citaId: cita.id })}
+          />
         </View>
 
         <View style={styles.buttonContainer}>

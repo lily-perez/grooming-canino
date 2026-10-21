@@ -3,6 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { useAuth } from './AuthContext';
 import {
   actualizarEstadoTarea,
+  finalizarCita as finalizarCitaApi,
   obtenerMisTareas,
 } from '../services/tareasService';
 
@@ -107,6 +108,15 @@ export function TareasProvider({ children }) {
     );
   }, []);
 
+  const finalizarCita = useCallback(
+    async (citaId, observaciones) => {
+      const resultado = await finalizarCitaApi(citaId, observaciones);
+      await recargar();
+      return resultado;
+    },
+    [recargar],
+  );
+
   const value = useMemo(
     () => ({
       tareas: vista.tareas,
@@ -114,8 +124,9 @@ export function TareasProvider({ children }) {
       error: vista.error,
       recargar,
       cambiarEstado,
+      finalizarCita,
     }),
-    [vista, recargar, cambiarEstado],
+    [vista, recargar, cambiarEstado, finalizarCita],
   );
 
   return (

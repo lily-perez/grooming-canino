@@ -1,21 +1,36 @@
-import { StyleSheet, Text, View, ScrollView } from 'react-native';
+import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+
 import PrimaryButton from '../components/PrimaryButton';
+import { useAuth } from '../context/AuthContext';
+import { useTareas } from '../context/TareasContext';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
+import { fechaLocalISO } from '../utils/vistasGroomer';
 
 export default function HomeScreen({ navigation }) {
-  // Datos temporales para visualizar la interfaz antes de conectar con Firebase
-  const tareasHoy = [
-    { id: '1', perro: 'Max', raza: 'Golden Retriever', servicio: 'Baño, secado y cepillado', hora: '08:00 AM' },
-    { id: '2', perro: 'Luna', raza: 'Poodle', servicio: 'Corte de pelo y limpieza de oídos', hora: '10:30 AM' },
-  ];
+  const { usuario } = useAuth();
+  const { tareas, cargando, error, recargar } = useTareas();
+  const hoy = fechaLocalISO();
+  const tareasHoy = tareas.filter((tarea) => tarea.fecha === hoy);
+  const nombre = usuario?.nombre?.trim() || 'Groomer';
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      refreshControl={
+        <RefreshControl
+          refreshing={cargando && tareas.length > 0}
+          onRefresh={recargar}
+          colors={[colors.primary]}
+        />
+      }
+    >
       <View style={styles.header}>
-        <Text style={styles.title}>Hola, Omar 👋</Text>
+        <Text style={styles.title}>Hola, {nombre}</Text>
         <Text style={styles.subtitle}>
-          Tienes {tareasHoy.length} tareas asignadas para hoy
+          {cargando && tareas.length === 0
+            ? 'Cargando tus tareas...'
+            : `Tienes ${tareasHoy.length} tareas asignadas para hoy`}
         </Text>
 
         <View style={styles.buttonContainer}>
@@ -23,7 +38,7 @@ export default function HomeScreen({ navigation }) {
             title="Ver citas"
             onPress={() => navigation.navigate('Citas')}
           />
-          
+
           <View style={styles.spacer} />
 
           <PrimaryButton
@@ -40,27 +55,67 @@ export default function HomeScreen({ navigation }) {
         </View>
       </View>
 
-      <Text style={styles.sectionTitle}>Próximas Atenciones</Text>
+      <Text style={styles.sectionTitle}>Tareas de hoy</Text>
 
-      {tareasHoy.map((tarea) => (
-        <View key={tarea.id} style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle}>{tarea.perro}</Text>
-            <Text style={styles.timeText}>{tarea.hora}</Text>
-          </View>
-
-          <Text style={styles.cardText}>Raza: {tarea.raza}</Text>
-          <Text style={styles.cardText}>Servicio: {tarea.servicio}</Text>
-
+      {cargando && tareas.length === 0 ? (
+        <ActivityIndicator color={colors.primary} />
+      ) : error ? (
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>No se pudieron cargar</Text>
+          <Text style={styles.cardText}>{error}</Text>
           <View style={styles.buttonContainer}>
-            <PrimaryButton
-              title="Registrar Atención"
-              // Esto fallará temporalmente hasta que creemos la pantalla 'Historial' en el navegador
-              onPress={() => navigation.navigate('Historial', { citaId: tarea.id, perro: tarea.perro })}
-            />
+            <PrimaryButton title="Reintentar" onPress={recargar} />
           </View>
         </View>
-      ))}
+      ) : tareasHoy.length === 0 ? (
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Sin tareas para hoy</Text>
+          <Text style={styles.cardText}>
+            Cuando tengas citas asignadas con tareas, aparecerán aquí.
+          </Text>
+        </View>
+      ) : (
+        tareasHoy.map((tarea) => (
+          <View key={tarea.id} style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Text style={styles.cardTitle}>{tarea.perro || 'Sin nombre'}</Text>
+              <Text style={styles.timeText}>
+                {tarea.horaInicio || 'Sin hora'}
+              </Text>
+            </View>
+
+            {!!tarea.raza && (
+              <Text style={styles.cardText}>Raza: {tarea.raza}</Text>
+            )}
+            <Text style={styles.cardText}>
+              Servicio: {tarea.servicio || 'Sin servicio'}
+            </Text>
+            <Text style={styles.cardText}>Tarea: {tarea.nombre || 'Sin nombre'}</Text>
+
+            <View style={styles.buttonContainer}>
+              <PrimaryButton
+                title="Ver tarea"
+                onPress={() =>
+                  navigation.navigate('DetalleTarea', { tareaId: tarea.id })
+                }
+              />
+            </View>
+
+            {tarea.citaEncontrada && (
+              <View style={styles.buttonContainer}>
+                <PrimaryButton
+                  title="Registrar atención"
+                  onPress={() =>
+                    navigation.navigate('Historial', {
+                      citaId: tarea.citaId,
+                    })
+                  }
+                />
+              </View>
+            )}
+          </View>
+        ))
+      )}
     </ScrollView>
   );
 }
@@ -70,7 +125,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
     padding: spacing.lg,
-    justify: 'center',
   },
   header: {
     marginTop: spacing.xl,
@@ -128,7 +182,6 @@ const styles = StyleSheet.create({
   buttonContainer: {
     marginTop: spacing.md,
   },
-
   spacer: {
     height: spacing.md,
   },
