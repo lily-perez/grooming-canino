@@ -1,54 +1,26 @@
 import { useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
 
+import EstadoBadge from '../components/EstadoBadge';
 import PrimaryButton from '../components/PrimaryButton';
+import { useTareas } from '../context/TareasContext';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
-
-const citas = [
-  {
-    id: '2',
-    fecha: '2026-09-22',
-    fechaTexto: '22 SEP 2026',
-    horaInicio: '12:50',
-    horaFin: '13:35',
-
-    perro: 'Rocky',
-    raza: 'Labrador',
-    cliente: 'Juan Perez',
-
-    groomer: 'Luis Suares',
-
-    servicio: 'Baño Completo',
-    duracion: '45 min',
-
-    tarea: 'Baño',
-    estadoTarea: 'Completada',
-
-    estado: 'Completada',
-  },
-];
-
-function obtenerFechaActual() {
-  const hoy = new Date();
-
-  const year = hoy.getFullYear();
-  const month = String(hoy.getMonth() + 1).padStart(2, '0');
-  const day = String(hoy.getDate()).padStart(2, '0');
-
-  return `${year}-${month}-${day}`;
-}
+import { citasDesdeTareas, fechaLocalISO, serviciosDeCita } from '../utils/vistasGroomer';
 
 export default function CitasScreen({ navigation }) {
-  const [filtroActivo, setFiltroActivo] = useState('pasadas');
-
-  const fechaActual = obtenerFechaActual();
+  const { tareas, cargando, error, recargar } = useTareas();
+  const [filtroActivo, setFiltroActivo] = useState('hoy');
+  const citas = useMemo(() => citasDesdeTareas(tareas), [tareas]);
+  const fechaActual = fechaLocalISO();
 
   const citasFiltradas = useMemo(() => {
     return citas.filter((cita) => {
@@ -60,14 +32,21 @@ export default function CitasScreen({ navigation }) {
         return cita.fecha > fechaActual;
       }
 
-      return cita.fecha < fechaActual;
+      return cita.fecha && cita.fecha < fechaActual;
     });
-  }, [filtroActivo, fechaActual]);
+  }, [citas, filtroActivo, fechaActual]);
 
   return (
     <ScrollView
       style={styles.container}
       contentContainerStyle={styles.contentContainer}
+      refreshControl={
+        <RefreshControl
+          refreshing={cargando && tareas.length > 0}
+          onRefresh={recargar}
+          colors={[colors.primary]}
+        />
+      }
     >
       <Text style={styles.title}>Mis citas</Text>
 
@@ -128,7 +107,20 @@ export default function CitasScreen({ navigation }) {
         </Pressable>
       </View>
 
-      {citasFiltradas.length === 0 ? (
+      {cargando && citas.length === 0 ? (
+        <View style={styles.emptyCard}>
+          <ActivityIndicator color={colors.primary} />
+          <Text style={styles.emptyText}>Cargando citas...</Text>
+        </View>
+      ) : error ? (
+        <View style={styles.emptyCard}>
+          <Text style={styles.emptyTitle}>No se pudieron cargar</Text>
+          <Text style={styles.emptyText}>{error}</Text>
+          <View style={styles.buttonContainer}>
+            <PrimaryButton title="Reintentar" onPress={recargar} />
+          </View>
+        </View>
+      ) : citasFiltradas.length === 0 ? (
         <View style={styles.emptyCard}>
           <Text style={styles.emptyTitle}>Sin citas</Text>
 
@@ -151,11 +143,15 @@ export default function CitasScreen({ navigation }) {
             <View style={styles.separator} />
 
             <Text style={styles.serviceLabel}>Servicio</Text>
-            <Text style={styles.service}>{cita.servicio}</Text>
-            <Text style={styles.duration}>{cita.duracion}</Text>
+            <Text style={styles.service}>
+              {serviciosDeCita(cita).join(', ') || 'Sin servicio'}
+            </Text>
+            <Text style={styles.duration}>
+              {cita.tareas.length} {cita.tareas.length === 1 ? 'tarea' : 'tareas'}
+            </Text>
 
             <View style={styles.status}>
-              <Text style={styles.statusText}>{cita.estado}</Text>
+              <EstadoBadge estado={cita.estado || 'sin estado'} />
             </View>
 
             <View style={styles.buttonContainer}>
@@ -163,7 +159,7 @@ export default function CitasScreen({ navigation }) {
                 title="Ver detalle"
                 onPress={() =>
                   navigation.navigate('DetalleCita', {
-                    cita,
+                    citaId: cita.id,
                   })
                 }
               />
@@ -237,6 +233,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     padding: spacing.lg,
     elevation: 3,
+    marginBottom: spacing.md,
   },
 
   date: {
@@ -291,10 +288,6 @@ const styles = StyleSheet.create({
 
   status: {
     alignSelf: 'flex-start',
-    backgroundColor: colors.primaryLight,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: 20,
     marginTop: spacing.md,
   },
 

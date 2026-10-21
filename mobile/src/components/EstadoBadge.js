@@ -8,6 +8,8 @@ const COLOR_POR_ESTADO = {
   pendiente: colors.pending,
   en_proceso: colors.inProgress,
   completada: colors.completed,
+  programada: colors.info,
+  cancelada: colors.danger,
 };
 
 export default function EstadoBadge({ estado }) {

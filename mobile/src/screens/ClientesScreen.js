@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { 
   StyleSheet, 
   Text, 
@@ -7,40 +7,26 @@ import {
   TextInput, 
   TouchableOpacity, 
   SafeAreaView,
-  Platform 
+  Platform,
+  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 
-// Datos de prueba (puedes conectarlos luego a tu API o backend)
-const CLIENTES_INICIALES = [
-  {
-    id: '1',
-    nombre: 'Ana Martínez',
-    telefono: '7890-1234',
-    email: 'ana.martinez@email.com',
-    perros: [
-      { id: 'p1', nombre: 'Max', raza: 'Golden Retriever', edad: '3 años', notas: 'Alérgico al champú con aroma a lavanda. Muy amigable.' },
-      { id: 'p2', nombre: 'Luna', raza: 'Poodle', edad: '2 años', notas: 'Se pone nerviosa con el secador.' }
-    ]
-  },
-  {
-    id: '2',
-    nombre: 'Carlos Ramírez',
-    telefono: '7234-5678',
-    email: 'carlos.r@email.com',
-    perros: [
-      { id: 'p3', nombre: 'Rocky', raza: 'Bulldog Inglés', edad: '4 años', notas: 'Cuidado con las arrugas al secar. Piel sensible.' }
-    ]
-  }
-];
+import PrimaryButton from '../components/PrimaryButton';
+import { useTareas } from '../context/TareasContext';
+import { clientesDesdeTareas } from '../utils/vistasGroomer';
 
 export default function ClientesScreen({ navigation }) {
+  const { tareas, cargando, error, recargar } = useTareas();
   const [busqueda, setBusqueda] = useState('');
-  const [clientes, setClientes] = useState(CLIENTES_INICIALES);
+  const clientes = useMemo(() => clientesDesdeTareas(tareas), [tareas]);
+  const consulta = busqueda.trim().toLowerCase();
 
-  const clientesFiltrados = clientes.filter(c => 
-    c.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-    c.telefono.includes(busqueda)
-  );
+  const clientesFiltrados = clientes.filter((c) => {
+    const nombre = (c.nombre || '').toLowerCase();
+    const telefono = c.telefono || '';
+    return nombre.includes(consulta) || telefono.includes(busqueda.trim());
+  });
 
   return (
     <SafeAreaView style={styles.container}>
@@ -55,24 +41,45 @@ export default function ClientesScreen({ navigation }) {
         />
       </View>
 
-      <FlatList
-        data={clientesFiltrados}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.lista}
-        renderItem={({ item }) => (
-          <TouchableOpacity 
-            style={styles.card}
-            onPress={() => navigation.navigate('DetalleClientePerro', { cliente: item })}
-          >
-            <View>
-              <Text style={styles.nombreCliente}>{item.nombre}</Text>
-              <Text style={styles.textoSecundario}>📞 {item.telefono}</Text>
-              <Text style={styles.textoSecundario}>🐶 Mascotas registradas: {item.perros.length}</Text>
-            </View>
-            <Text style={styles.flecha}>›</Text>
-          </TouchableOpacity>
-        )}
-      />
+      {cargando && clientes.length === 0 ? (
+        <ActivityIndicator color="#39AFA5" style={styles.estado} />
+      ) : error ? (
+        <View style={styles.estado}>
+          <Text style={styles.textoSecundario}>{error}</Text>
+          <PrimaryButton title="Reintentar" onPress={recargar} />
+        </View>
+      ) : (
+        <FlatList
+          data={clientesFiltrados}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.lista}
+          refreshControl={
+            <RefreshControl refreshing={cargando && tareas.length > 0} onRefresh={recargar} />
+          }
+          ListEmptyComponent={
+            <Text style={styles.textoSecundario}>
+              No hay clientes relacionados con tus tareas.
+            </Text>
+          }
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.card}
+              onPress={() => navigation.navigate('DetalleClientePerro', { clienteId: item.id })}
+            >
+              <View>
+                <Text style={styles.nombreCliente}>{item.nombre}</Text>
+                <Text style={styles.textoSecundario}>
+                  Teléfono: {item.telefono || 'Sin teléfono'}
+                </Text>
+                <Text style={styles.textoSecundario}>
+                  Mascotas relacionadas: {item.perros?.length ?? 0}
+                </Text>
+              </View>
+              <Text style={styles.flecha}>›</Text>
+            </TouchableOpacity>
+          )}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -134,5 +141,8 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: '#BDC3C7',
     fontWeight: 'bold',
-  }
+  },
+  estado: {
+    padding: 16,
+  },
 });

@@ -1,18 +1,18 @@
 import React, { createContext, useState, useContext } from 'react';
-import { guardarRegistroAtencion } from '../services/historialService';
+import { finalizarCita } from '../services/historialService';
 
-const HistorialContext = createContext();
+const HistorialContext = createContext(null);
 
 export const HistorialProvider = ({ children }) => {
   const [estaGuardando, setEstaGuardando] = useState(false);
 
-  const registrarAtencion = async (datos, imagenUri) => {
+  const registrarAtencion = async (citaId, observaciones) => {
     setEstaGuardando(true);
+
     try {
-      const resultado = await guardarRegistroAtencion(datos, imagenUri);
-      return resultado;
+      await finalizarCita(citaId, observaciones);
+      return { exito: true };
     } catch (error) {
-      console.error("Error en Contexto al guardar:", error);
       return { exito: false, error: error.message };
     } finally {
       setEstaGuardando(false);
@@ -26,4 +26,12 @@ export const HistorialProvider = ({ children }) => {
   );
 };
 
-export const useHistorial = () => useContext(HistorialContext);
+export const useHistorial = () => {
+  const ctx = useContext(HistorialContext);
+
+  if (!ctx) {
+    throw new Error('useHistorial debe usarse dentro de HistorialProvider');
+  }
+
+  return ctx;
+};
