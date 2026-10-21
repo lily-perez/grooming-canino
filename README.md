@@ -1,122 +1,137 @@
-#Integrantes
+Integrantes
 
 Manuel Alejandro Mejia López - ML251320
-
 Lily Astrid Pérez Avelar - PA251527
-
 Ariel Omar Nunfio Méndez - NM253359
-
 Levi Asael Valle Palma - VP253612
-
 Wilber Larris Carranza Campos - CC253652
 
-# Sistema Multiplataforma de Gestión de Grooming Canino
+Sistema Multiplataforma de Gestión de Grooming Canino
 
-Plataforma web interna para la gestión operativa de un negocio de grooming
-canino. Centraliza clientes, perros, citas, servicios, tareas, disponibilidad
-de Groomers, historial de atención y un Dashboard administrativo.
+Plataforma multiplataforma para la gestión operativa de un negocio de grooming canino. Centraliza clientes, perros, citas, servicios, tareas, disponibilidad de Groomers, historial de atención y un Dashboard administrativo, tanto en web como en aplicativo móvil.
 
-Proyecto de la asignatura **DPS941 — Diseño y Programación de Software
-Multiplataforma**. Esta etapa corresponde al aplicativo web. La aplicación
-móvil se desarrollará posteriormente.
+Proyecto de la asignatura DPS941 — Diseño y Programación de Software Multiplataforma.
 
-## Objetivo
+Objetivo
 
-Reducir la dependencia de WhatsApp, llamadas y agenda física al coordinar
-atenciones. El sistema permite registrar dueños y mascotas, programar citas con
-uno o varios servicios, asignar Groomers mediante tareas, consultar
-disponibilidad, finalizar atenciones y revisar métricas operativas.
+Reducir la dependencia de WhatsApp, llamadas y agenda física al coordinar atenciones. El sistema permite registrar dueños y mascotas, programar citas con uno o varios servicios, asignar Groomers mediante tareas, consultar disponibilidad, finalizar atenciones y revisar métricas operativas.
 
-La solución final contemplará:
+La solución contempla:
 
-- una plataforma web orientada principalmente al Administrador;
-- una aplicación móvil orientada principalmente a los Groomers.
+Una plataforma web orientada principalmente al Administrador.
 
-## Estado funcional
+Una aplicación móvil orientada a los Groomers y seguimiento en movilidad.
 
-Etapa 2 — Desarrollo Base del Proyecto Web.
+Estado funcional
 
-Módulos disponibles:
+Etapa 3 — Integración Web y Desarrollo Móvil.
 
-- autenticación y roles;
-- usuarios;
-- clientes y perros;
-- servicios;
-- citas y tareas;
-- disponibilidad y horarios de Groomers;
-- Historial / Registro de Atención;
-- Dashboard administrativo.
+Módulos disponibles en la solución:
 
-La ruta `/` redirige a `/login`.
+Autenticación, registro y control de roles.
 
-Aún no forman parte de esta etapa el módulo de Reportes, los adjuntos, un
-Dashboard calculado para Groomer ni una vista dedicada `/groomer/tareas`. El
-Groomer consulta y actualiza sus tareas desde `/groomer/servicios`.
+Usuarios y gestión del personal.
 
-## Roles
+Clientes y perros.
 
-- **Administrador:** gestiona usuarios, clientes, perros, servicios, citas,
-  horarios, asignaciones, historial y Dashboard.
-- **Groomer:** usuario con `rol = groomer`. Consulta y actualiza sus propias
-  tareas. No administra el catálogo general.
+Servicios y catálogo general.
 
-## Funcionalidades principales
+Citas y asignación de tareas.
 
-- Registro, inicio de sesión y rutas protegidas según rol.
-- Gestión de usuarios, clientes, perros, servicios, citas, tareas y horarios.
-- Relación Cliente → Perro → Cita. La cita guarda `perroId`; el cliente se
-  obtiene a través del perro.
-- Citas con uno o varios servicios y `horaFinEstimada` calculada en servidor.
-- Tareas asociadas a una cita, con un Groomer por tarea.
-- Disponibilidad de Groomers calculada a partir de horarios y ocupaciones. No
-  se persiste como entidad.
+Disponibilidad y horarios de Groomers.
 
-### Dashboard administrativo
+Historial / Registro de Atención.
 
-Resumen operativo calculado a partir de citas, tareas, servicios, clientes,
-perros e historial. No se almacena un recurso propio de Dashboard.
+Dashboard administrativo.
+
+Módulos Móviles (Autenticación, Historial/Inicio y Tareas).
+
+La ruta / redirige a /login.
+
+El Groomer consulta y actualiza sus tareas asignadas desde sus vistas correspondientes.
+
+Roles
+
+Administrador: gestiona usuarios, clientes, perros, servicios, citas, horarios, asignaciones, historial y Dashboard.
+
+Groomer: usuario con rol = groomer. Consulta y actualiza sus propias tareas. No administra el catálogo general.
+
+Funcionalidades principales
+
+Registro, inicio de sesión y rutas protegidas según rol.
+
+Gestión de usuarios, clientes, perros, servicios, citas, tareas y horarios.
+
+Relación Cliente → Perro → Cita. La cita guarda perroId; el cliente se obtiene a través del perro.
+
+Citas con uno o varios servicios y horaFinEstimada calculada en servidor.
+
+Tareas asociadas a una cita, con un Groomer por tarea.
+
+Disponibilidad de Groomers calculada a partir de horarios y ocupaciones.
+
+Dashboard administrativo
+
+Resumen operativo calculado a partir de citas, tareas, servicios, clientes, perros e historial.
 
 Incluye:
 
-- métricas de citas de hoy, de la semana y del mes;
-- filtros **Hoy**, **Semana** y **Mes**;
-- cantidad de citas programadas, en proceso, completadas y canceladas;
-- tareas activas;
-- servicios más solicitados;
-- clientes más frecuentes;
-- gráfico de citas por día;
-- próximas citas;
-- actividad reciente, con búsqueda por cliente o perro.
+Métricas de citas de hoy, de la semana y del mes.
 
-Endpoint: `GET /api/dashboard/resumen?periodo=hoy|semana|mes`.
+Filtros Hoy, Semana y Mes.
 
-### Historial / Registro de Atención
+Cantidad de citas programadas, en proceso, completadas y canceladas.
+
+Tareas activas.
+
+Servicios más solicitados.
+
+Clientes más frecuentes.
+
+Gráfico de citas por día.
+
+Próximas citas y actividad reciente.
+
+Historial / Registro de Atención
 
 Al finalizar una cita en proceso con todas sus tareas completadas:
 
-- se crea un registro de atención;
-- la cita pasa a estado `completada`;
-- el registro queda disponible en el historial y en su detalle.
+Se crea un registro de atención.
 
-El historial es la consulta de esos registros de atención, no una entidad
-adicional. Se persiste en MockAPI `/historial`.
+La cita pasa a estado completada.
 
-## Tecnologías
+El registro queda disponible en el historial y en su detalle.
 
-- JavaScript
-- React
-- Next.js 16.3.4 (App Router)
-- Tailwind CSS
-- Context API
-- API REST con Route Handlers de Next.js
-- MockAPI como persistencia temporal del servidor
+ Etapa Móvil (Aplicación Móvil)
 
-Esta etapa no utiliza TypeScript, Redux, Axios, Firebase, Firestore, Prisma ni
-Supabase.
+Se ha integrado la capa móvil para la gestión operativa y consulta en dispositivos móviles.
 
-## Arquitectura
+ Módulos e Integraciones Móviles
 
-```text
+Autenticación y Roles (feature/mobile-autenticacion-roles): Inicio de sesión y asignación de permisos según el rol del usuario en dispositivos móviles.
+
+Historial e Inicio (feature/mobile-home-historial): Pantalla principal móvil e historial de atenciones y servicios realizados.
+
+Gestión de Tareas Móvil (feature/tareas-movil): Panel interactivo para la visualización, seguimiento y actualización del estado de tareas asignadas al personal en movimiento.
+
+Tecnologías
+
+JavaScript
+
+React
+
+Next.js 16.3.4 (App Router)
+
+Tailwind CSS
+
+Context API
+
+API REST con Route Handlers de Next.js
+
+MockAPI como persistencia temporal del servidor
+
+Arquitectura
+
 UI
 → Hook / Context
 → Repository
@@ -127,16 +142,18 @@ UI
 → Adapter
 → mockApiClient
 → MockAPI
-```
 
-- El navegador no consume MockAPI de forma directa.
-- Los services del cliente llaman a la API interna de Next.js (`/api/*`).
-- Los repositories aíslan el acceso a datos.
-- Los permisos se validan en los Route Handlers, no solo en la interfaz.
 
-## Estructura del proyecto
+El navegador no consume MockAPI de forma directa.
 
-```text
+Los services del cliente llaman a la API interna de Next.js (/api/*).
+
+Los repositories aíslan el acceso a datos.
+
+Los permisos se validan en los Route Handlers, no solo en la interfaz.
+
+Estructura del proyecto
+
 src/
 ├── app/                 Rutas web y Route Handlers
 │   ├── admin/
@@ -152,14 +169,12 @@ src/
 │   └── reglas/
 ├── services/            Cliente HTTP hacia /api/*
 └── utils/               Validaciones y utilidades
-```
 
-## Persistencia
 
-MockAPI se usa como persistencia temporal. Los Route Handlers se comunican con
-ella a través de adapters. Recursos actuales:
+Persistencia
 
-```text
+MockAPI se usa como persistencia temporal. Recursos actuales:
+
 /usuarios
 /servicios
 /tareas
@@ -168,76 +183,51 @@ ella a través de adapters. Recursos actuales:
 /clientes
 /perros
 /historial
-```
 
-Relaciones principales:
 
-```text
-Cita.perroId → Perro.id
-Perro.clienteId → Cliente.id
-Cita.servicioIds → Servicio.id
-Tarea.citaId → Cita.id
-Tarea.servicioId → Servicio.id
-Tarea.groomerId → Usuario.id
-```
+Requisitos previos
 
-`/historial` almacena registros de atención. La disponibilidad se calcula en
-servidor.
+Node.js compatible con Next.js 16
 
-## Requisitos previos
+npm
 
-- Node.js compatible con Next.js 16
-- npm
+Variables de entorno
 
-## Variables de entorno
+Copiar .env.example a .env.local y completar los valores locales:
 
-Copiar `.env.example` a `.env.local` y completar los valores locales:
-
-```bash
 cp .env.example .env.local
-```
 
-```text
+
 MOCK_API_BASE_URL=
 AUTH_SESSION_SECRET=
-```
 
-`MOCK_API_BASE_URL` es privada del servidor. No debe exponerse al navegador ni
-definirse como `NEXT_PUBLIC_*`. No commitear `.env.local` ni secretos.
 
-## Instalación y ejecución
+Instalación y ejecución
 
-```bash
 npm install
 npm run dev
-```
 
-La aplicación queda en [http://localhost:3000](http://localhost:3000). Si el
-puerto 3000 está ocupado, Next.js puede asignar otro.
 
-## Comandos disponibles
+La aplicación queda disponible en http://localhost:3000.
 
-```bash
+Comandos disponibles
+
 npm install      # instala dependencias
 npm run dev      # entorno de desarrollo
 npm run lint     # análisis estático
 npm run build    # compilación de producción
-```
 
-`GET /api/health` comprueba que los Route Handlers responden.
 
-## Rutas principales
+Rutas principales
 
 Públicas:
 
-```text
 /login
 /registro
-```
+
 
 Administrador:
 
-```text
 /admin/dashboard
 /admin/usuarios
 /admin/servicios
@@ -246,11 +236,9 @@ Administrador:
 /admin/clientes
 /admin/perros
 /admin/historial
-```
+
 
 Groomer:
 
-```text
 /groomer/dashboard
 /groomer/servicios
-```
