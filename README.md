@@ -242,3 +242,9 @@ Groomer:
 
 /groomer/dashboard
 /groomer/servicios
+
+## Entregables de la Etapa 3 – Avance 1
+- **Código fuente:** [Aplicación React Native](./mobile/)
+- **Video demostrativo:** [Ver video en SharePoint](https://udbedu-my.sharepoint.com/:v:/g/personal/pa251527_alumno_udb_edu_sv/IQBAAd2ySAyhT6Bdt7TC8iEiAZmwJVWNnYC8wLna_0-7TUo?e=MRR7xf)
+- **Documento PDF:** [DPS Etapa 3 Implementacion Movil.pdf](https://github.com/user-attachments/files/33776560/DPS.Etapa.3.Implementacion.Movil.pdf)
+
