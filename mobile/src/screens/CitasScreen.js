@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -11,16 +11,52 @@ import {
 
 import EstadoBadge from '../components/EstadoBadge';
 import PrimaryButton from '../components/PrimaryButton';
-import { useTareas } from '../context/TareasContext';
+import { obtenerCitasAsignadas } from '../services/citasFirestoreService';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
-import { citasDesdeTareas, fechaLocalISO, serviciosDeCita } from '../utils/vistasGroomer';
+import { fechaLocalISO } from '../utils/vistasGroomer';
+
+// TEMPORAL:
+// Cuando Firebase Authentication esté integrado,
+// se reemplazará por el UID real del usuario autenticado.
+const GROOMER_UID_PRUEBA = 'demo-groomer-01';
 
 export default function CitasScreen({ navigation }) {
-  const { tareas, cargando, error, recargar } = useTareas();
+  const [citas, setCitas] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState('');
   const [filtroActivo, setFiltroActivo] = useState('hoy');
-  const citas = useMemo(() => citasDesdeTareas(tareas), [tareas]);
+
   const fechaActual = fechaLocalISO();
+
+  const cargarCitas = useCallback(async () => {
+    try {
+      setError('');
+      setCargando(true);
+
+      const resultado = await obtenerCitasAsignadas(
+        GROOMER_UID_PRUEBA,
+      );
+
+      setCitas(resultado);
+    } catch (err) {
+      console.error(
+        'Error cargando citas desde Firestore:',
+        err,
+      );
+
+      setError(
+        err?.message ||
+          'No se pudieron consultar las citas desde Firestore.',
+      );
+    } finally {
+      setCargando(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    cargarCitas();
+  }, [cargarCitas]);
 
   const citasFiltradas = useMemo(() => {
     return citas.filter((cita) => {
@@ -42,8 +78,8 @@ export default function CitasScreen({ navigation }) {
       contentContainerStyle={styles.contentContainer}
       refreshControl={
         <RefreshControl
-          refreshing={cargando && tareas.length > 0}
-          onRefresh={recargar}
+          refreshing={cargando && citas.length > 0}
+          onRefresh={cargarCitas}
           colors={[colors.primary]}
         />
       }
@@ -65,7 +101,8 @@ export default function CitasScreen({ navigation }) {
           <Text
             style={[
               styles.filterText,
-              filtroActivo === 'hoy' && styles.filterTextActive,
+              filtroActivo === 'hoy' &&
+                styles.filterTextActive,
             ]}
           >
             Hoy
@@ -75,14 +112,16 @@ export default function CitasScreen({ navigation }) {
         <Pressable
           style={[
             styles.filter,
-            filtroActivo === 'proximas' && styles.filterActive,
+            filtroActivo === 'proximas' &&
+              styles.filterActive,
           ]}
           onPress={() => setFiltroActivo('proximas')}
         >
           <Text
             style={[
               styles.filterText,
-              filtroActivo === 'proximas' && styles.filterTextActive,
+              filtroActivo === 'proximas' &&
+                styles.filterTextActive,
             ]}
           >
             Próximas
@@ -92,14 +131,16 @@ export default function CitasScreen({ navigation }) {
         <Pressable
           style={[
             styles.filter,
-            filtroActivo === 'pasadas' && styles.filterActive,
+            filtroActivo === 'pasadas' &&
+              styles.filterActive,
           ]}
           onPress={() => setFiltroActivo('pasadas')}
         >
           <Text
             style={[
               styles.filterText,
-              filtroActivo === 'pasadas' && styles.filterTextActive,
+              filtroActivo === 'pasadas' &&
+                styles.filterTextActive,
             ]}
           >
             Pasadas
@@ -110,14 +151,24 @@ export default function CitasScreen({ navigation }) {
       {cargando && citas.length === 0 ? (
         <View style={styles.emptyCard}>
           <ActivityIndicator color={colors.primary} />
-          <Text style={styles.emptyText}>Cargando citas...</Text>
+
+          <Text style={styles.emptyText}>
+            Cargando citas desde Firestore...
+          </Text>
         </View>
       ) : error ? (
         <View style={styles.emptyCard}>
-          <Text style={styles.emptyTitle}>No se pudieron cargar</Text>
+          <Text style={styles.emptyTitle}>
+            No se pudieron cargar
+          </Text>
+
           <Text style={styles.emptyText}>{error}</Text>
+
           <View style={styles.buttonContainer}>
-            <PrimaryButton title="Reintentar" onPress={recargar} />
+            <PrimaryButton
+              title="Reintentar"
+              onPress={cargarCitas}
+            />
           </View>
         </View>
       ) : citasFiltradas.length === 0 ? (
@@ -131,27 +182,37 @@ export default function CitasScreen({ navigation }) {
       ) : (
         citasFiltradas.map((cita) => (
           <View key={cita.id} style={styles.card}>
-            <Text style={styles.date}>{cita.fechaTexto}</Text>
-
-            <Text style={styles.time}>
-              {cita.horaInicio} - {cita.horaFin}
+            <Text style={styles.date}>
+              {cita.fechaTexto}
             </Text>
 
-            <Text style={styles.petName}>{cita.perro}</Text>
-            <Text style={styles.petBreed}>{cita.raza}</Text>
+            <Text style={styles.time}>
+              {cita.horaInicio || 'Sin hora'} -{' '}
+              {cita.horaFin || 'Sin hora'}
+            </Text>
+
+            <Text style={styles.petName}>
+              {cita.perro || 'Sin nombre'}
+            </Text>
+
+            <Text style={styles.petBreed}>
+              {cita.raza || 'Sin raza'}
+            </Text>
 
             <View style={styles.separator} />
 
-            <Text style={styles.serviceLabel}>Servicio</Text>
-            <Text style={styles.service}>
-              {serviciosDeCita(cita).join(', ') || 'Sin servicio'}
+            <Text style={styles.serviceLabel}>
+              Cliente
             </Text>
-            <Text style={styles.duration}>
-              {cita.tareas.length} {cita.tareas.length === 1 ? 'tarea' : 'tareas'}
+
+            <Text style={styles.service}>
+              {cita.cliente || 'Sin cliente'}
             </Text>
 
             <View style={styles.status}>
-              <EstadoBadge estado={cita.estado || 'sin estado'} />
+              <EstadoBadge
+                estado={cita.estado || 'sin estado'}
+              />
             </View>
 
             <View style={styles.buttonContainer}>
@@ -159,7 +220,7 @@ export default function CitasScreen({ navigation }) {
                 title="Ver detalle"
                 onPress={() =>
                   navigation.navigate('DetalleCita', {
-                    citaId: cita.id,
+                    cita,
                   })
                 }
               />
@@ -280,21 +341,9 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
 
-  duration: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-
   status: {
     alignSelf: 'flex-start',
     marginTop: spacing.md,
-  },
-
-  statusText: {
-    color: colors.completed,
-    fontWeight: '700',
-    fontSize: 13,
   },
 
   buttonContainer: {
