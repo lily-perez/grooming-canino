@@ -11,17 +11,15 @@ import {
 
 import EstadoBadge from '../components/EstadoBadge';
 import PrimaryButton from '../components/PrimaryButton';
+import { useAuth } from '../context/AuthContext';
 import { obtenerCitasAsignadas } from '../services/citasFirestoreService';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { fechaLocalISO } from '../utils/vistasGroomer';
 
-// TEMPORAL:
-// Cuando Firebase Authentication esté integrado,
-// se reemplazará por el UID real del usuario autenticado.
-const GROOMER_UID_PRUEBA = 'demo-groomer-01';
-
 export default function CitasScreen({ navigation }) {
+  const { uid } = useAuth();
+
   const [citas, setCitas] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
@@ -30,13 +28,18 @@ export default function CitasScreen({ navigation }) {
   const fechaActual = fechaLocalISO();
 
   const cargarCitas = useCallback(async () => {
+    if (!uid) {
+      setCitas([]);
+      setError('No se identificó al usuario autenticado.');
+      setCargando(false);
+      return;
+    }
+
     try {
       setError('');
       setCargando(true);
 
-      const resultado = await obtenerCitasAsignadas(
-        GROOMER_UID_PRUEBA,
-      );
+      const resultado = await obtenerCitasAsignadas(uid);
 
       setCitas(resultado);
     } catch (err) {
@@ -52,7 +55,7 @@ export default function CitasScreen({ navigation }) {
     } finally {
       setCargando(false);
     }
-  }, []);
+  }, [uid]);
 
   useEffect(() => {
     cargarCitas();
@@ -89,6 +92,15 @@ export default function CitasScreen({ navigation }) {
       <Text style={styles.subtitle}>
         Consulta las citas asignadas al Groomer.
       </Text>
+
+      <View style={styles.availabilityButton}>
+        <PrimaryButton
+          title="Ver disponibilidad"
+          onPress={() =>
+            navigation.navigate('Disponibilidad')
+          }
+        />
+      </View>
 
       <View style={styles.filters}>
         <Pressable
@@ -254,6 +266,10 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: colors.textSecondary,
     marginTop: spacing.sm,
+    marginBottom: spacing.lg,
+  },
+
+  availabilityButton: {
     marginBottom: spacing.lg,
   },
 

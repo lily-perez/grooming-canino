@@ -6,6 +6,26 @@ import { useAuth } from '../context/AuthContext';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 
+function obtenerNombreGroomer(usuario) {
+  if (usuario?.nombre?.trim()) {
+    return usuario.nombre.trim();
+  }
+
+  const correo = usuario?.correo?.trim().toLowerCase();
+
+  if (correo) {
+    const coincidencia = correo.match(/^groomer(\d+)@/);
+
+    if (coincidencia) {
+      return `Groomer ${coincidencia[1]}`;
+    }
+
+    return correo;
+  }
+
+  return 'Groomer asignado';
+}
+
 export default function DetalleCitaScreen({ navigation, route }) {
   const { usuario } = useAuth();
   const { cita } = route.params ?? {};
@@ -33,6 +53,8 @@ export default function DetalleCitaScreen({ navigation, route }) {
     .filter(Boolean)
     .join(' - ');
 
+  const nombreGroomer = obtenerNombreGroomer(usuario);
+
   return (
     <ScrollView
       style={styles.container}
@@ -58,7 +80,7 @@ export default function DetalleCitaScreen({ navigation, route }) {
 
         <Text style={styles.label}>Groomer asignado</Text>
         <Text style={styles.value}>
-          {usuario?.nombre || cita.groomerUid || 'Sin groomer'}
+          {nombreGroomer}
         </Text>
 
         <Text style={styles.label}>Fecha</Text>
