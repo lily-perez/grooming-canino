@@ -9,7 +9,7 @@ import { spacing } from '../theme/spacing';
 const CORREO_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function LoginScreen() {
-  const { iniciarSesion, aviso } = useAuth();
+  const { iniciarSesion, iniciarSesionConGoogle, aviso } = useAuth();
   const [correo, setCorreo] = useState('');
   const [contrasena, setContrasena] = useState('');
   const [error, setError] = useState('');
@@ -35,6 +35,23 @@ export default function LoginScreen() {
 
     try {
       await iniciarSesion(correo, contrasena);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setEnviando(false);
+    }
+  };
+
+  const entrarConGoogle = async () => {
+    if (enviando) {
+      return;
+    }
+
+    setEnviando(true);
+    setError('');
+
+    try {
+      await iniciarSesionConGoogle();
     } catch (e) {
       setError(e.message);
     } finally {
@@ -81,6 +98,15 @@ export default function LoginScreen() {
           <PrimaryButton
             title={enviando ? 'Ingresando...' : 'Ingresar'}
             onPress={entrar}
+            disabled={enviando}
+          />
+        </View>
+
+        <View style={styles.buttonContainer}>
+          <PrimaryButton
+            title={enviando ? 'Espera...' : 'Continuar con Google'}
+            onPress={entrarConGoogle}
+            disabled={enviando}
           />
         </View>
       </View>
