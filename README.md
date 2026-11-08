@@ -1,4 +1,4 @@
-Integrantes
+Integrantes:
 
 Manuel Alejandro Mejia López - ML251320
 Lily Astrid Pérez Avelar - PA251527
