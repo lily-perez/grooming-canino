@@ -1,11 +1,19 @@
 import { afirmarConfiguracionFirebase, auth, googleWebClientId } from '../config/firebase';
 import { GoogleAuthProvider, signInWithCredential } from '../config/sdkAuth';
 import { decisionGoogle, mensajeDeErrorAuth } from '../domain/acceso.mjs';
+import { googleNativoDisponible } from './googleNativo';
+
+const MENSAJE_EXPO_GO =
+  'Google Sign-In no está disponible en Expo Go. Usa correo y contraseña. En un development build, cuando el módulo nativo esté instalado, este botón iniciará sesión con Google.';
 
 const MENSAJE_DEVELOPMENT_BUILD =
   'Google Sign-In requiere un development build con @react-native-google-signin/google-signin. No funciona dentro de Expo Go.';
 
 export async function iniciarSesionConGoogle() {
+  if (!googleNativoDisponible()) {
+    throw new Error(MENSAJE_EXPO_GO);
+  }
+
   afirmarConfiguracionFirebase();
 
   if (!googleWebClientId) {
