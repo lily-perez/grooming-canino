@@ -6,18 +6,20 @@ import {
   finalizarCita as finalizarCitaApi,
   obtenerMisTareas,
 } from '../services/tareasService';
+import { sembrarDatosDemo } from '../services/seedTareas';
 
 const TareasContext = createContext(null);
 
 export function TareasProvider({ children }) {
   const { usuario } = useAuth();
-  const esGroomer = usuario?.rol === 'groomer';
-  const usuarioId = esGroomer ? String(usuario.id) : null;
+  const esGroomer = usuario?.rol === 'groomer' && usuario?.activo === true;
+  const usuarioId = esGroomer ? usuario.uid : null;
   const solicitud = useRef(0);
   const [origenId, setOrigenId] = useState(null);
   const [tareasGuardadas, setTareasGuardadas] = useState([]);
   const [cargando, setCargando] = useState(false);
   const [errorGuardado, setErrorGuardado] = useState(null);
+
   const vista = useMemo(() => {
     const vigentes = origenId !== null && origenId === usuarioId;
 
@@ -40,7 +42,7 @@ export function TareasProvider({ children }) {
     setErrorGuardado(null);
 
     try {
-      const lista = await obtenerMisTareas();
+      const lista = await obtenerMisTareas(id);
 
       if (solicitud.current !== actual) {
         return;
@@ -70,7 +72,7 @@ export function TareasProvider({ children }) {
     const actual = ++solicitud.current;
     const id = usuarioId;
 
-    obtenerMisTareas()
+    obtenerMisTareas(id)
       .then((lista) => {
         if (solicitud.current !== actual) {
           return;
@@ -98,15 +100,41 @@ export function TareasProvider({ children }) {
     };
   }, [usuarioId]);
 
-  // Lanza el error si el servidor rechaza el cambio; la pantalla lo muestra.
-  const cambiarEstado = useCallback(async (tareaId, estado) => {
-    const actualizada = await actualizarEstadoTarea(tareaId, estado);
-    const nuevoEstado = actualizada?.estado ?? estado;
+  // Lanza el error si Firestore rechaza el cambio; la pantalla lo muestra.
+  const cambiarEstado = useCallback(
+    async (tareaId, estado) => {
+      const tarea = tareasGuardadas.find((t) => t.id === tareaId);
 
-    setTareasGuardadas((prev) =>
-      prev.map((t) => (t.id === tareaId ? { ...t, estado: nuevoEstado } : t)),
-    );
-  }, []);
+      if (!tarea) {
+        throw new Error('Tarea no encontrada.');
+      }
+
+      const actualizada = await actualizarEstadoTarea(
+        tareaId,
+        estado,
+        tarea.estado,
+        usuarioId,
+        tarea.citaId,
+      );
+
+      setTareasGuardadas((prev) =>
+        prev.map((t) => {
+          if (t.id === tareaId) {
+            return {
+              ...t,
+              estado: actualizada.estado,
+              citaEstado: estado === 'en_proceso' ? 'en_proceso' : t.citaEstado,
+            };
+          }
+          if (estado === 'en_proceso' && t.citaId === tarea.citaId) {
+            return { ...t, citaEstado: 'en_proceso' };
+          }
+          return t;
+        }),
+      );
+    },
+    [tareasGuardadas, usuarioId],
+  );
 
   const finalizarCita = useCallback(
     async (citaId, observaciones) => {
@@ -117,6 +145,15 @@ export function TareasProvider({ children }) {
     [recargar],
   );
 
+  const sembrarDemo = useCallback(async () => {
+    if (!usuarioId) {
+      return;
+    }
+
+    await sembrarDatosDemo(usuarioId);
+    await recargar();
+  }, [usuarioId, recargar]);
+
   const value = useMemo(
     () => ({
       tareas: vista.tareas,
@@ -125,8 +162,9 @@ export function TareasProvider({ children }) {
       recargar,
       cambiarEstado,
       finalizarCita,
+      sembrarDemo,
     }),
-    [vista, recargar, cambiarEstado, finalizarCita],
+    [vista, recargar, cambiarEstado, finalizarCita, sembrarDemo],
   );
 
   return (
@@ -136,8 +174,10 @@ export function TareasProvider({ children }) {
 
 export function useTareas() {
   const ctx = useContext(TareasContext);
+
   if (!ctx) {
     throw new Error('useTareas debe usarse dentro de TareasProvider');
   }
+
   return ctx;
 }

@@ -1,80 +1,56 @@
-import { apiGet, apiPatch, apiPost } from './apiClient';
-import { formatearFecha, nombreCompleto } from '../utils/formato';
+import {
+  collection, doc, getDocs, query, where, writeBatch, serverTimestamp,
+} from 'firebase/firestore';
 
-function mapaPorId(lista) {
-  return new Map((lista ?? []).map((item) => [String(item.id), item]));
-}
+import { auth, db } from '../config/firebase';
+import { formatearFecha } from '../utils/formato';
 
-// Pide varios recursos por id; si alguno falla, simplemente no se incluye.
-async function traerPorIds(rutaBase, ids) {
-  const resultados = await Promise.allSettled(
-    ids.map((id) => apiGet(`${rutaBase}/${encodeURIComponent(id)}`)),
-  );
+const idDe = (texto) =>
+  String(texto ?? '').trim().toLowerCase().replace(/\s+/g, '-');
 
-  return mapaPorId(
-    resultados
-      .filter((r) => r.status === 'fulfilled' && r.value)
-      .map((r) => r.value),
-  );
-}
-
-function unicos(valores) {
-  return [...new Set(valores.filter(Boolean).map(String))];
-}
-
-export async function obtenerMisTareas() {
-  const [tareas, citas, servicios] = await Promise.all([
-    apiGet('/api/tareas/mias'),
-    apiGet('/api/citas'),
-    apiGet('/api/servicios'),
+export async function obtenerMisTareas(groomerUid) {
+  const [tareasSnap, citasSnap] = await Promise.all([
+    getDocs(query(collection(db, 'tareas'), where('groomerUid', '==', groomerUid))),
+    getDocs(query(collection(db, 'citas'), where('groomerUid', '==', groomerUid))),
   ]);
 
-  const citasPorId = mapaPorId(citas);
-  const serviciosPorId = mapaPorId(servicios);
+  const citas = new Map(citasSnap.docs.map((d) => [d.id, d.data()]));
 
-  const perros = await traerPorIds(
-    '/api/perros',
-    unicos((citas ?? []).map((c) => c.perroId)),
-  );
-  const clientes = await traerPorIds(
-    '/api/clientes',
-    unicos([...perros.values()].map((p) => p.clienteId)),
-  );
-
-  return (tareas ?? [])
-    .map((tarea) => {
-      const cita = citasPorId.get(String(tarea.citaId));
-      const servicio = serviciosPorId.get(String(tarea.servicioId));
-      const perro = cita ? perros.get(String(cita.perroId)) : null;
-      const cliente = perro ? clientes.get(String(perro.clienteId)) : null;
+  return tareasSnap.docs
+    .map((d) => {
+      const t = d.data();
+      const cita = citas.get(String(t.citaId));
+      const perro = t.perro ?? cita?.perro ?? '';
+      const cliente = t.cliente ?? cita?.cliente ?? '';
+      const fecha = cita?.fecha ?? t.fecha ?? '';
 
       return {
-        id: String(tarea.id),
-        citaId: cita ? String(cita.id) : String(tarea.citaId ?? ''),
+        id: d.id,
+        citaId: String(t.citaId ?? ''),
         citaEncontrada: Boolean(cita),
-        nombre: tarea.nombre ?? '',
-        servicio: servicio?.nombre ?? '',
-        duracionMinutos: Number(servicio?.duracionEstimadaMinutos) || 0,
-        estado: tarea.estado ?? '',
-        horaInicio: tarea.horaInicio ?? '',
-        horaFin: tarea.horaFin ?? '',
-        observaciones: tarea.observaciones ?? '',
-        fecha: cita?.fecha ?? '',
-        fechaTexto: formatearFecha(cita?.fecha),
+        nombre: t.nombre ?? '',
+        servicio: t.servicio ?? cita?.servicio ?? '',
+        duracionMinutos: 0,
+        estado: t.estado ?? '',
+        horaInicio: t.horaInicio ?? '',
+        horaFin: t.horaFin ?? '',
+        observaciones: t.observaciones ?? '',
+        fecha,
+        fechaTexto: formatearFecha(fecha),
         citaEstado: cita?.estado ?? '',
         citaHoraInicio: cita?.horaInicio ?? '',
-        citaHoraFin: cita?.horaFinEstimada ?? '',
+        citaHoraFin: cita?.horaFin ?? '',
         citaObservaciones: cita?.observaciones ?? '',
-        perroId: perro?.id ? String(perro.id) : '',
-        perro: perro?.nombre ?? '',
-        raza: perro?.raza ?? '',
-        sexo: perro?.sexo ?? '',
-        fechaNacimiento: perro?.fechaNacimiento ?? '',
-        notasPerro: perro?.observaciones ?? '',
-        clienteId: cliente?.id ? String(cliente.id) : '',
-        cliente: nombreCompleto(cliente),
-        telefono: cliente?.telefono ?? '',
-        correo: cliente?.correo ?? '',
+        perroId: idDe(perro),
+        perro,
+        raza: t.raza ?? cita?.raza ?? '',
+        sexo: '',
+        fechaNacimiento: '',
+        notasPerro: '',
+        clienteId: idDe(cliente),
+        cliente,
+        telefono: '',
+        correo: '',
       };
     })
     .sort((a, b) =>
@@ -82,15 +58,60 @@ export async function obtenerMisTareas() {
     );
 }
 
-export async function actualizarEstadoTarea(tareaId, estado) {
-  return apiPatch(`/api/tareas/${encodeURIComponent(tareaId)}/estado`, {
-    estado,
+// Cambia el estado, registra el cambio en "historial" y marca la cita
+// como en_proceso al iniciar su primera tarea. Todo en un batch atómico.
+export async function actualizarEstadoTarea(
+  tareaId, estadoNuevo, estadoAnterior, groomerUid, citaId,
+) {
+  const batch = writeBatch(db);
+
+  batch.update(doc(db, 'tareas', tareaId), {
+    estado: estadoNuevo,
+    actualizadoEn: serverTimestamp(),
   });
+  batch.set(doc(collection(db, 'historial')), {
+    tipo: 'cambio_estado_tarea',
+    tareaId,
+    citaId: citaId ?? '',
+    groomerUid,
+    estadoAnterior,
+    estadoNuevo,
+    fecha: serverTimestamp(),
+  });
+  if (estadoNuevo === 'en_proceso' && citaId) {
+    batch.update(doc(db, 'citas', citaId), { estado: 'en_proceso' });
+  }
+
+  await batch.commit();
+  return { estado: estadoNuevo };
 }
 
+// historialService la reexporta, así que se mantiene el nombre y la firma.
 export async function finalizarCita(citaId, observaciones) {
-  return apiPost(
-    `/api/citas/${encodeURIComponent(citaId)}/finalizar`,
-    observaciones,
+  const batch = writeBatch(db);
+
+  batch.update(doc(db, 'citas', citaId), {
+    estado: 'finalizada',
+    observaciones: observaciones ?? '',
+    actualizadoEn: serverTimestamp(),
+  });
+  batch.set(doc(collection(db, 'historial')), {
+    tipo: 'cita_finalizada',
+    citaId,
+    groomerUid: auth.currentUser?.uid ?? '',
+    observaciones: observaciones ?? '',
+    fecha: serverTimestamp(),
+  });
+
+  await batch.commit();
+  return { estado: 'finalizada' };
+}
+
+export async function obtenerHistorial(groomerUid) {
+  const snap = await getDocs(
+    query(collection(db, 'historial'), where('groomerUid', '==', groomerUid)),
   );
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() }))
+    .sort((a, b) => (b.fecha?.seconds ?? 0) - (a.fecha?.seconds ?? 0));
 }

@@ -23,7 +23,7 @@ const FILTROS = [
 ];
 
 export default function TareasScreen({ navigation }) {
-  const { tareas, cargando, error, recargar } = useTareas();
+  const { tareas, cargando, error, recargar, sembrarDemo } = useTareas();
   const [filtroActivo, setFiltroActivo] = useState(ESTADOS.PENDIENTE);
 
   const tareasFiltradas = useMemo(
@@ -83,13 +83,13 @@ export default function TareasScreen({ navigation }) {
           </View>
         </View>
       ) : tareasFiltradas.length === 0 ? (
-        <View style={styles.emptyCard}>
-          <Text style={styles.emptyTitle}>Sin tareas</Text>
-          <Text style={styles.emptyText}>
-            No hay tareas disponibles en esta sección.
-          </Text>
-        </View>
-      ) : (
+  <View style={styles.emptyCard}>
+    <Text style={styles.emptyTitle}>Sin tareas</Text>
+    <Text style={styles.emptyText}>
+      No hay tareas disponibles en esta sección.
+    </Text>
+  </View>
+) : (
         tareasFiltradas.map((tarea) => (
           <View key={tarea.id} style={styles.card}>
             <Text style={styles.date}>{tarea.fechaTexto}</Text>
