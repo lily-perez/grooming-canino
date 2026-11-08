@@ -1,26 +1,33 @@
+import React, { useEffect } from 'react';
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import PrimaryButton from '../components/PrimaryButton';
 import { useAuth } from '../context/AuthContext';
-import { useTareas } from '../context/TareasContext';
+import { useHistorial } from '../context/HistorialContext';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
-import { fechaLocalISO } from '../utils/vistasGroomer';
 
 export default function HomeScreen({ navigation }) {
-  const { usuario } = useAuth();
-  const { tareas, cargando, error, recargar } = useTareas();
-  const hoy = fechaLocalISO();
-  const tareasHoy = tareas.filter((tarea) => tarea.fecha === hoy);
-  const nombre = usuario?.nombre?.trim() || 'Groomer';
+  const { usuario, logout } = useAuth();
+  const { historial, cargandoHistorial, cargarHistorial } = useHistorial();
+  
+  // Usamos el email de Firebase si no hay nombre
+  const nombre = usuario?.email?.split('@')[0] || 'Groomer'; 
+
+  // Cargar el historial al montar la pantalla o cuando cambie el usuario
+  useEffect(() => {
+    if (usuario?.uid) {
+      cargarHistorial(usuario.uid);
+    }
+  }, [usuario, cargarHistorial]);
 
   return (
     <ScrollView
       style={styles.container}
       refreshControl={
         <RefreshControl
-          refreshing={cargando && tareas.length > 0}
-          onRefresh={recargar}
+          refreshing={cargandoHistorial}
+          onRefresh={() => usuario?.uid && cargarHistorial(usuario.uid)}
           colors={[colors.primary]}
         />
       }
@@ -28,9 +35,7 @@ export default function HomeScreen({ navigation }) {
       <View style={styles.header}>
         <Text style={styles.title}>Hola, {nombre}</Text>
         <Text style={styles.subtitle}>
-          {cargando && tareas.length === 0
-            ? 'Cargando tus tareas...'
-            : `Tienes ${tareasHoy.length} tareas asignadas para hoy`}
+          Bienvenido a tu Dashboard
         </Text>
 
         <View style={styles.buttonContainer}>
@@ -38,16 +43,12 @@ export default function HomeScreen({ navigation }) {
             title="Ver citas"
             onPress={() => navigation.navigate('Citas')}
           />
-
           <View style={styles.spacer} />
-
           <PrimaryButton
             title="Clientes y Perros"
             onPress={() => navigation.navigate('Clientes')}
           />
-        </View>
-
-        <View style={styles.buttonContainer}>
+          <View style={styles.spacer} />
           <PrimaryButton
             title="Mis tareas"
             onPress={() => navigation.navigate('Tareas')}
@@ -55,67 +56,36 @@ export default function HomeScreen({ navigation }) {
         </View>
       </View>
 
-      <Text style={styles.sectionTitle}>Tareas de hoy</Text>
+      <Text style={styles.sectionTitle}>Mi Historial de Atenciones</Text>
 
-      {cargando && tareas.length === 0 ? (
-        <ActivityIndicator color={colors.primary} />
-      ) : error ? (
+      {cargandoHistorial ? (
+        <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: spacing.lg }} />
+      ) : historial.length === 0 ? (
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>No se pudieron cargar</Text>
-          <Text style={styles.cardText}>{error}</Text>
-          <View style={styles.buttonContainer}>
-            <PrimaryButton title="Reintentar" onPress={recargar} />
-          </View>
-        </View>
-      ) : tareasHoy.length === 0 ? (
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Sin tareas para hoy</Text>
+          <Text style={styles.cardTitle}>Sin historial</Text>
           <Text style={styles.cardText}>
-            Cuando tengas citas asignadas con tareas, aparecerán aquí.
+            No tienes atenciones registradas aún en Firestore. Cuando finalices una cita, aparecerá aquí.
           </Text>
         </View>
       ) : (
-        tareasHoy.map((tarea) => (
-          <View key={tarea.id} style={styles.card}>
+        historial.map((registro) => (
+          <View key={registro.id} style={styles.card}>
             <View style={styles.cardHeader}>
-              <Text style={styles.cardTitle}>{tarea.perro || 'Sin nombre'}</Text>
-              <Text style={styles.timeText}>
-                {tarea.horaInicio || 'Sin hora'}
-              </Text>
+              <Text style={styles.cardTitle}>{registro.perro || 'Sin nombre'}</Text>
             </View>
-
-            {!!tarea.raza && (
-              <Text style={styles.cardText}>Raza: {tarea.raza}</Text>
-            )}
-            <Text style={styles.cardText}>
-              Servicio: {tarea.servicio || 'Sin servicio'}
-            </Text>
-            <Text style={styles.cardText}>Tarea: {tarea.nombre || 'Sin nombre'}</Text>
-
-            <View style={styles.buttonContainer}>
-              <PrimaryButton
-                title="Ver tarea"
-                onPress={() =>
-                  navigation.navigate('DetalleTarea', { tareaId: tarea.id })
-                }
-              />
-            </View>
-
-            {tarea.citaEncontrada && (
-              <View style={styles.buttonContainer}>
-                <PrimaryButton
-                  title="Registrar atención"
-                  onPress={() =>
-                    navigation.navigate('Historial', {
-                      citaId: tarea.citaId,
-                    })
-                  }
-                />
-              </View>
-            )}
+            <Text style={styles.cardText}>Pelaje: {registro.pelaje || 'N/A'}</Text>
+            <Text style={styles.cardText}>Comportamiento: {registro.comportamiento || 'N/A'}</Text>
+            <Text style={styles.cardText}>Observaciones: {registro.observaciones || 'Ninguna'}</Text>
           </View>
         ))
       )}
+
+      <View style={[styles.buttonContainer, { marginTop: spacing.xl, marginBottom: spacing.xl }]}>
+        <PrimaryButton
+          title="Cerrar Sesión"
+          onPress={logout}
+        />
+      </View>
     </ScrollView>
   );
 }
@@ -168,16 +138,11 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.primary,
   },
-  timeText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.secondary || '#666',
-  },
   cardText: {
     fontSize: 15,
     lineHeight: 22,
     color: colors.textSecondary,
-    marginBottom: 2,
+    marginBottom: 4,
   },
   buttonContainer: {
     marginTop: spacing.md,

@@ -2,6 +2,8 @@ import React, { useMemo, useState } from 'react';
 import { StyleSheet, Text, View, ScrollView, TextInput, Alert, ActivityIndicator } from 'react-native';
 import PrimaryButton from '../components/PrimaryButton';
 import { useTareas } from '../context/TareasContext';
+import { useAuth } from '../context/AuthContext';
+import { useHistorial } from '../context/HistorialContext';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { citasDesdeTareas, motivoNoFinalizar } from '../utils/vistasGroomer';
@@ -19,16 +21,20 @@ const CAMPOS = [
 
 export default function HistorialScreen({ route, navigation }) {
   const { citaId } = route.params ?? {};
-  const { tareas, finalizarCita } = useTareas();
+  const { tareas } = useTareas();
+  const { usuario } = useAuth();
+  const { registrarAtencion, estaGuardando } = useHistorial();
+
   const cita = useMemo(
     () => citasDesdeTareas(tareas).find((item) => item.id === String(citaId)),
     [tareas, citaId],
   );
+
   const bloqueo = motivoNoFinalizar(cita);
   const [valores, setValores] = useState(() =>
     Object.fromEntries(CAMPOS.map((campo) => [campo.clave, ''])),
   );
-  const [guardando, setGuardando] = useState(false);
+
   const perro = cita?.perro || 'Sin nombre';
 
   const cambiar = (clave, texto) => {
@@ -38,26 +44,37 @@ export default function HistorialScreen({ route, navigation }) {
   const handleGuardar = async () => {
     const motivo = motivoNoFinalizar(cita);
 
-    if (motivo || guardando) {
+    if (motivo || estaGuardando) {
       if (motivo) {
         Alert.alert('No se puede finalizar', motivo);
       }
       return;
     }
 
-    setGuardando(true);
+    // Construimos el objeto completo para la base de datos
+    const datosAtencion = {
+      citaId: cita.id,
+      perro: cita.perro,
+      clienteId: cita.clienteId || null, // Asegúrate de que la cita traiga el clienteId
+      groomerId: usuario?.uid || null,
+      groomerEmail: usuario?.email || null,
+      ...valores
+    };
 
     try {
-      await finalizarCita(cita.id, valores);
-      Alert.alert(
-        'Cita finalizada',
-        `La cita de ${perro} quedó completada.`,
-        [{ text: 'OK', onPress: () => navigation.goBack() }],
-      );
+      const resultado = await registrarAtencion(cita.id, datosAtencion);
+
+      if (resultado.exito) {
+         Alert.alert(
+          'Cita finalizada',
+          `La cita de ${perro} quedó completada y registrada en Firestore.`,
+          [{ text: 'OK', onPress: () => navigation.goBack() }],
+        );
+      } else {
+         Alert.alert('No se pudo guardar', resultado.error);
+      }
     } catch (error) {
-      Alert.alert('No se pudo finalizar', error.message);
-    } finally {
-      setGuardando(false);
+      Alert.alert('Error inesperado', error.message);
     }
   };
 
@@ -96,11 +113,11 @@ export default function HistorialScreen({ route, navigation }) {
       </View>
 
       <View style={styles.buttonContainer}>
-        {guardando ? (
+        {estaGuardando ? (
           <ActivityIndicator size="large" color={colors.primary} />
         ) : (
           <PrimaryButton
-            title="Finalizar cita"
+            title="Finalizar cita y Guardar"
             onPress={handleGuardar}
             disabled={Boolean(bloqueo)}
           />
