@@ -19,6 +19,7 @@ import { clientesDesdeTareas } from '../utils/vistasGroomer';
 export default function ClientesScreen({ navigation }) {
   const { tareas, cargando, error, recargar } = useTareas();
   const [busqueda, setBusqueda] = useState('');
+  
   const clientes = useMemo(() => clientesDesdeTareas(tareas), [tareas]);
   const consulta = busqueda.trim().toLowerCase();
 
@@ -69,10 +70,10 @@ export default function ClientesScreen({ navigation }) {
               <View>
                 <Text style={styles.nombreCliente}>{item.nombre}</Text>
                 <Text style={styles.textoSecundario}>
-                  Teléfono: {item.telefono || 'Sin teléfono'}
+                  📞 Teléfono: {item.telefono || 'Sin teléfono'}
                 </Text>
                 <Text style={styles.textoSecundario}>
-                  Mascotas relacionadas: {item.perros?.length ?? 0}
+                  🐶 Mascotas relacionadas: {item.perros?.length ?? 0}
                 </Text>
               </View>
               <Text style={styles.flecha}>›</Text>
@@ -144,5 +145,6 @@ const styles = StyleSheet.create({
   },
   estado: {
     padding: 16,
+    alignItems: 'center',
   },
 });
