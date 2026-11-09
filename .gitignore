@@ -44,3 +44,6 @@ next-env.d.ts
 # JetBrains / IntelliJ IDEA
 .idea/
 *.iml
+
+# Local Cursor / agent notes
+/contex-cursor/

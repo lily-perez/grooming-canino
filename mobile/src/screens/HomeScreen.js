@@ -8,11 +8,16 @@ import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 
 export default function HomeScreen({ navigation }) {
-  const { usuario, logout } = useAuth();
+  const { usuario, cerrarSesion } = useAuth();
   const { historial, cargandoHistorial, cargarHistorial } = useHistorial();
-  
-  // Usamos el email de Firebase si no hay nombre
-  const nombre = usuario?.email?.split('@')[0] || 'Groomer'; 
+
+  // Preferir nombre del perfil; si no hay, usar la parte local del correo
+  const nombre =
+    (typeof usuario?.nombre === 'string' && usuario.nombre.trim()) ||
+    (typeof usuario?.correo === 'string' && usuario.correo.includes('@')
+      ? usuario.correo.split('@')[0]
+      : '') ||
+    'Groomer'; 
 
   // Cargar el historial al montar la pantalla o cuando cambie el usuario
   useEffect(() => {
@@ -83,7 +88,7 @@ export default function HomeScreen({ navigation }) {
       <View style={[styles.buttonContainer, { marginTop: spacing.xl, marginBottom: spacing.xl }]}>
         <PrimaryButton
           title="Cerrar Sesión"
-          onPress={logout}
+          onPress={cerrarSesion}
         />
       </View>
     </ScrollView>
