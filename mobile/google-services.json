@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "602352863448-hsdvcqpcphcbs9m9b7aognd8qmcicqic.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.groomingcanino.udb",
+            "certificate_hash": "981431a65c55478fe5bb2b2e78114d66cb77d43f"
+          }
+        },
+        {
           "client_id": "602352863448-pjvuncgacdog3fki9miiuimnhdfe8qic.apps.googleusercontent.com",
           "client_type": 3
         }
