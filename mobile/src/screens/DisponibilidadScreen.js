@@ -66,8 +66,60 @@ export default function DisponibilidadScreen({ navigation }) {
   }, [uid]);
 
   useEffect(() => {
-    cargarDisponibilidad();
-  }, [cargarDisponibilidad]);
+    let cancelled = false;
+
+    async function cargarAlMontar() {
+      if (!uid) {
+        await Promise.resolve();
+        if (cancelled) {
+          return;
+        }
+
+        setHorarios([]);
+        setCitas([]);
+        setError('No se identificó al groomer autenticado.');
+        setCargando(false);
+        return;
+      }
+
+      try {
+        const resultado =
+          await obtenerDisponibilidadGroomer(uid);
+
+        if (cancelled) {
+          return;
+        }
+
+        setError('');
+        setHorarios(resultado.horarios ?? []);
+        setCitas(resultado.citas ?? []);
+      } catch (err) {
+        if (cancelled) {
+          return;
+        }
+
+        console.error(
+          'Error cargando disponibilidad desde Firestore:',
+          err,
+        );
+
+        setError(
+          err?.message ||
+            'No se pudo consultar la disponibilidad desde Firestore.',
+        );
+      } finally {
+        if (!cancelled) {
+          setCargando(false);
+        }
+      }
+    }
+
+    void cargarAlMontar();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [uid]);
 
   const citasQueOcupanAgenda = useMemo(() => {
     return citas.filter((cita) => {

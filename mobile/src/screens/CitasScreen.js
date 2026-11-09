@@ -58,8 +58,57 @@ export default function CitasScreen({ navigation }) {
   }, [uid]);
 
   useEffect(() => {
-    cargarCitas();
-  }, [cargarCitas]);
+    let cancelled = false;
+
+    async function cargarAlMontar() {
+      if (!uid) {
+        await Promise.resolve();
+        if (cancelled) {
+          return;
+        }
+
+        setCitas([]);
+        setError('No se identificó al usuario autenticado.');
+        setCargando(false);
+        return;
+      }
+
+      try {
+        const resultado = await obtenerCitasAsignadas(uid);
+
+        if (cancelled) {
+          return;
+        }
+
+        setError('');
+        setCitas(resultado);
+      } catch (err) {
+        if (cancelled) {
+          return;
+        }
+
+        console.error(
+          'Error cargando citas desde Firestore:',
+          err,
+        );
+
+        setError(
+          err?.message ||
+            'No se pudieron consultar las citas desde Firestore.',
+        );
+      } finally {
+        if (!cancelled) {
+          setCargando(false);
+        }
+      }
+    }
+
+    void cargarAlMontar();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [uid]);
 
   const citasFiltradas = useMemo(() => {
     return citas.filter((cita) => {
