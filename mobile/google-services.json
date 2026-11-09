@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "602352863448",
+    "project_id": "grooming-canino-udb",
+    "storage_bucket": "grooming-canino-udb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:602352863448:android:4364abb84384dba38cefad",
+        "android_client_info": {
+          "package_name": "com.groomingcanino.udb"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "602352863448-pjvuncgacdog3fki9miiuimnhdfe8qic.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB2sFOgViWQPCD013yvYfOsMIcZCmmxU8E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "602352863448-pjvuncgacdog3fki9miiuimnhdfe8qic.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
