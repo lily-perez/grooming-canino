@@ -1,0 +1,54 @@
+rules_version = '2';
+// PROPUESTA LOCAL. No está publicada en grooming-canino-udb.
+// Sustituir las reglas temporales abiertas con este archivo, sin fusionar
+// antes los módulos de Citas, Tareas, Clientes, Perros e Historial, les
+// negaría el acceso. El cliente móvil no escribe rol ni activo.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function firmado() {
+      return request.auth != null;
+    }
+
+    function perfil(uid) {
+      return get(/databases/$(database)/documents/usuarios/$(uid)).data;
+    }
+
+    function esAdmin() {
+      return firmado()
+        && perfil(request.auth.uid).rol == 'administrador'
+        && perfil(request.auth.uid).activo == true;
+    }
+
+    function esGroomerActivo() {
+      return firmado()
+        && perfil(request.auth.uid).rol == 'groomer'
+        && perfil(request.auth.uid).activo == true;
+    }
+
+    function perfilValido() {
+      return (request.resource.data.rol == 'administrador'
+          || request.resource.data.rol == 'groomer')
+        && request.resource.data.activo is bool
+        && request.resource.data.keys().hasAll(['rol', 'activo']);
+    }
+
+    match /usuarios/{uid} {
+      allow read: if firmado() && (request.auth.uid == uid || esAdmin());
+      allow create, update: if esAdmin() && perfilValido();
+      allow delete: if false;
+    }
+
+    // Coordinar con Lily: la consulta del groomer debe filtrar groomerUid
+    // por request.auth.uid. demo-groomer-01 no es un UID de Firebase.
+    match /citas/{citaId} {
+      allow read: if esAdmin()
+        || (esGroomerActivo() && resource.data.groomerUid == request.auth.uid);
+      allow create, update, delete: if esAdmin();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

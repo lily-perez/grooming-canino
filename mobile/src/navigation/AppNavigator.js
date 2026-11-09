@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { AuthProvider, useAuth } from '../context/AuthContext';
+import { destinoNavegacion } from '../domain/acceso.mjs';
 import { TareasProvider } from '../context/TareasContext';
 import AdminHomeScreen from '../screens/AdminHomeScreen';
 import HomeScreen from '../screens/HomeScreen';
@@ -15,6 +16,8 @@ import DetalleTareaScreen from '../screens/DetalleTareaScreen';
 import ClientesScreen from '../screens/ClientesScreen';
 import DetalleClientePerroScreen from '../screens/DetalleClientePerroScreen';
 import { colors } from '../theme/colors';
+import { spacing } from '../theme/spacing';
+import PrimaryButton from '../components/PrimaryButton';
 
 const Stack = createNativeStackNavigator();
 
@@ -28,11 +31,32 @@ function BotonSalir() {
   );
 }
 
+function SinPermisoScreen() {
+  const { usuario, aviso, cerrarSesion } = useAuth();
+
+  return (
+    <View style={styles.bloqueado}>
+      <Text style={styles.bloqueadoTitulo}>Sin acceso</Text>
+      <Text style={styles.bloqueadoTexto}>
+        {usuario?.correo
+          ? `${usuario.correo} inició sesión, pero no tiene un rol activo.`
+          : 'La sesión no tiene un rol activo.'}
+      </Text>
+      <Text style={styles.bloqueadoTexto}>
+        Un administrador debe asignar administrador o groomer en la fuente
+        confiable. Esta pantalla no concede permisos.
+      </Text>
+      {!!aviso && <Text style={styles.bloqueadoAviso}>{aviso}</Text>}
+      <PrimaryButton title="Cerrar sesión" onPress={cerrarSesion} />
+    </View>
+  );
+}
+
 function Rutas() {
   const { usuario, cargando } = useAuth();
-  const rol = usuario?.rol;
+  const destino = destinoNavegacion({ cargando, usuario });
 
-  if (cargando) {
+  if (destino === 'cargando') {
     return (
       <View style={styles.splash}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -47,7 +71,7 @@ function Rutas() {
           headerShown: true,
         }}
       >
-        {rol === 'administrador' ? (
+        {destino === 'administrador' ? (
           <Stack.Screen
             name="AdminHome"
             component={AdminHomeScreen}
@@ -56,7 +80,7 @@ function Rutas() {
               headerRight: () => <BotonSalir />,
             }}
           />
-        ) : rol === 'groomer' ? (
+        ) : destino === 'groomer' ? (
           <>
             <Stack.Screen
               name="Home"
@@ -109,6 +133,12 @@ function Rutas() {
               options={{ title: 'Expediente del Cliente' }}
             />
           </>
+        ) : destino === 'sin-permiso' ? (
+          <Stack.Screen
+            name="SinPermiso"
+            component={SinPermisoScreen}
+            options={{ title: 'Sin acceso', headerShown: false }}
+          />
         ) : (
           <Stack.Screen
             name="Login"
@@ -143,5 +173,27 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: '700',
     fontSize: 15,
+  },
+  bloqueado: {
+    flex: 1,
+    justifyContent: 'center',
+    backgroundColor: colors.background,
+    padding: spacing.lg,
+  },
+  bloqueadoTitulo: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    marginBottom: spacing.sm,
+  },
+  bloqueadoTexto: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    marginBottom: spacing.md,
+  },
+  bloqueadoAviso: {
+    color: colors.danger,
+    fontSize: 14,
+    marginBottom: spacing.md,
   },
 });

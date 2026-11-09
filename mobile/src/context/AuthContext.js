@@ -1,133 +1,124 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-
-import {
-  cerrarSesionApi,
-  iniciarSesionApi,
-  obtenerUsuarioActual,
-} from '../services/authService';
-import { registrarPerdidaDeSesion } from '../services/apiClient';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { auth } from '../config/firebase';
+import { onAuthStateChanged } from '../config/sdkAuth';
+import { reducirSesion, resolverAcceso } from '../domain/acceso.mjs';
+import { cerrarSesionFirebase, iniciarSesionCorreo } from '../services/authService';
+import { iniciarSesionConGoogle as entrarConGoogleFirebase } from '../services/googleAuth';
+import { leerDocumentoUsuario } from '../services/perfilUsuario';
 
 const AuthContext = createContext(null);
 
-const ROLES_PERMITIDOS = ['administrador', 'groomer'];
-
-function esUsuarioPermitido(usuario) {
-  return (
-    Boolean(usuario) &&
-    usuario.activo === true &&
-    ROLES_PERMITIDOS.includes(usuario.rol)
-  );
-}
-
 export function AuthProvider({ children }) {
-  const [usuario, setUsuario] = useState(null);
-  const [cargando, setCargando] = useState(true);
-  const [aviso, setAviso] = useState('');
-  const usuarioRef = useRef(null);
+  const [estado, setEstado] = useState(() =>
+    reducirSesion(
+      { usuario: null, cargando: true, aviso: '' },
+      { tipo: 'inicio' },
+    ),
+  );
 
-  const guardarUsuario = useCallback((valor) => {
-    usuarioRef.current = valor;
-    setUsuario(valor);
+  const aplicar = useCallback((evento) => {
+    setEstado((previo) => reducirSesion(previo, evento));
   }, []);
 
   useEffect(() => {
-    return registrarPerdidaDeSesion(() => {
-      if (usuarioRef.current) {
-        setAviso('Tu sesión ya no es válida. Vuelve a iniciar sesión.');
+    let generacion = 0;
+
+    const cancelar = onAuthStateChanged(auth, (user) => {
+      const actual = ++generacion;
+
+      if (!user) {
+        aplicar({ tipo: 'sin-usuario' });
+        return;
       }
 
-      guardarUsuario(null);
+      aplicar({ tipo: 'verificando' });
+
+      Promise.all([leerDocumentoUsuario(user.uid), user.getIdTokenResult()])
+        .then(([documento, token]) => {
+          if (actual !== generacion) {
+            return;
+          }
+
+          const usuario = resolverAcceso({
+            uid: user.uid,
+            correoAuth: user.email,
+            nombreAuth: user.displayName,
+            claims: token?.claims ?? {},
+            documento,
+          });
+
+          aplicar({
+            tipo: 'perfil',
+            usuario,
+            aviso: usuario.rol ? '' : 'Tu cuenta no tiene un rol activo.',
+          });
+        })
+        .catch(() => {
+          if (actual !== generacion) {
+            return;
+          }
+
+          aplicar({
+            tipo: 'perfil',
+            usuario: resolverAcceso({
+              uid: user.uid,
+              correoAuth: user.email,
+              nombreAuth: user.displayName,
+              claims: {},
+              documento: null,
+            }),
+            aviso: 'No se pudo verificar el rol. No se concedió acceso.',
+          });
+        });
     });
-  }, [guardarUsuario]);
-
-  // Al abrir la app, intenta recuperar la sesión guardada en la cookie.
-  useEffect(() => {
-    let activo = true;
-
-    obtenerUsuarioActual()
-      .then(async (u) => {
-        if (!activo) {
-          return;
-        }
-
-        if (esUsuarioPermitido(u)) {
-          guardarUsuario(u);
-          return;
-        }
-
-        if (u) {
-          await cerrarSesionApi();
-        }
-      })
-      .catch((error) => {
-        if (!activo) {
-          return;
-        }
-
-        guardarUsuario(null);
-        setAviso(
-          error?.status === 0
-            ? 'No se pudo conectar con el servidor.'
-            : error?.message || 'No se pudo comprobar la sesión.',
-        );
-      })
-      .finally(() => {
-        if (activo) {
-          setCargando(false);
-        }
-      });
 
     return () => {
-      activo = false;
+      generacion += 1;
+      cancelar();
     };
-  }, [guardarUsuario]);
+  }, [aplicar]);
 
   const iniciarSesion = useCallback(async (correo, contrasena) => {
-    setAviso('');
-    const u = await iniciarSesionApi(correo.trim(), contrasena);
+    aplicar({ tipo: 'aviso', aviso: '' });
+    await iniciarSesionCorreo(correo, contrasena);
+  }, [aplicar]);
 
-    if (!esUsuarioPermitido(u)) {
-      await cerrarSesionApi();
-
-      if (!u) {
-        throw new Error('No se pudo iniciar sesión.');
-      }
-
-      if (u.activo !== true) {
-        throw new Error('La cuenta se encuentra inactiva.');
-      }
-
-      throw new Error(
-        'Tu cuenta no tiene un rol autorizado para esta aplicación.',
-      );
-    }
-
-    guardarUsuario(u);
-  }, [guardarUsuario]);
+  const iniciarSesionConGoogle = useCallback(async () => {
+    aplicar({ tipo: 'aviso', aviso: '' });
+    await entrarConGoogleFirebase();
+  }, [aplicar]);
 
   const cerrarSesion = useCallback(async () => {
-    const confirmado = await cerrarSesionApi();
+    await cerrarSesionFirebase();
+    aplicar({ tipo: 'aviso', aviso: '' });
+  }, [aplicar]);
 
-    guardarUsuario(null);
-    setAviso(
-      confirmado
-        ? ''
-        : 'Se cerró la sesión en este dispositivo, pero no se pudo confirmar el cierre en el servidor.',
-    );
-  }, [guardarUsuario]);
+  const value = useMemo(() => {
+    const usuario = estado.usuario;
 
-  const value = useMemo(
-    () => ({ usuario, cargando, aviso, iniciarSesion, cerrarSesion }),
-    [usuario, cargando, aviso, iniciarSesion, cerrarSesion],
-  );
+    return {
+      usuario,
+      uid: usuario?.uid ?? null,
+      correo: usuario?.correo ?? '',
+      rol: usuario?.rol ?? null,
+      activo: usuario?.activo === true,
+      cargando: estado.cargando,
+      aviso: estado.aviso,
+      iniciarSesion,
+      iniciarSesionConGoogle,
+      cerrarSesion,
+    };
+  }, [estado, iniciarSesion, iniciarSesionConGoogle, cerrarSesion]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
+
   if (!ctx) {
     throw new Error('useAuth debe usarse dentro de AuthProvider');
   }
+
   return ctx;
 }

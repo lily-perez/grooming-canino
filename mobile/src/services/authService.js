@@ -1,30 +1,36 @@
-import { ErrorApi, apiGet, apiPost } from './apiClient';
+import { afirmarConfiguracionFirebase, auth } from '../config/firebase';
+import { signInWithEmailAndPassword, signOut } from '../config/sdkAuth';
+import { ejecutarInicioCorreo } from '../domain/acceso.mjs';
+import { googleNativoDisponible } from './googleNativo';
 
-export async function iniciarSesionApi(correo, contrasena) {
-  const data = await apiPost('/api/autenticacion/login', {
+export async function iniciarSesionCorreo(correo, contrasena) {
+  return ejecutarInicioCorreo({
     correo,
     contrasena,
+    motivoConfig: null,
+    signIn: (correoNormalizado, clave) => {
+      afirmarConfiguracionFirebase();
+      return signInWithEmailAndPassword(auth, correoNormalizado, clave).then(
+        (credencial) => credencial.user,
+      );
+    },
   });
-  return data?.usuario ?? null;
 }
 
-export async function obtenerUsuarioActual() {
-  try {
-    const data = await apiGet('/api/autenticacion/usuario-actual');
-    return data?.usuario ?? data ?? null;
-  } catch (error) {
-    if (error instanceof ErrorApi && error.status === 401) {
-      return null;
-    }
-    throw error;
+export async function cerrarSesionFirebase() {
+  await signOut(auth);
+
+  if (!googleNativoDisponible()) {
+    return;
   }
-}
 
-export async function cerrarSesionApi() {
   try {
-    await apiPost('/api/autenticacion/cerrar-sesion');
-    return true;
+    const modulo = await import('@react-native-google-signin/google-signin');
+
+    if (typeof modulo.GoogleSignin?.signOut === 'function') {
+      await modulo.GoogleSignin.signOut();
+    }
   } catch {
-    return false;
+    // La sesión de Firebase ya se cerró. Un fallo posterior de Google no la restaura.
   }
 }
