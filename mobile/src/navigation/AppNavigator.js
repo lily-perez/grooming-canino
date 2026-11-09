@@ -10,6 +10,7 @@ import HomeScreen from '../screens/HomeScreen';
 import LoginScreen from '../screens/LoginScreen';
 import CitasScreen from '../screens/CitasScreen';
 import DetalleCitaScreen from '../screens/DetalleCitaScreen';
+import DisponibilidadScreen from '../screens/DisponibilidadScreen';
 import HistorialScreen from '../screens/HistorialScreen';
 import TareasScreen from '../screens/TareasScreen';
 import DetalleTareaScreen from '../screens/DetalleTareaScreen';
@@ -101,6 +102,12 @@ function Rutas() {
               name="DetalleCita"
               component={DetalleCitaScreen}
               options={{ title: 'Detalle de cita' }}
+            />
+
+            <Stack.Screen
+              name="Disponibilidad"
+              component={DisponibilidadScreen}
+              options={{ title: 'Mi disponibilidad' }}
             />
 
             <Stack.Screen

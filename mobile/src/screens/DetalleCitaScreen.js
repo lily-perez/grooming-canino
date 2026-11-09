@@ -1,37 +1,59 @@
-import { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import EstadoBadge from '../components/EstadoBadge';
 import PrimaryButton from '../components/PrimaryButton';
 import { useAuth } from '../context/AuthContext';
-import { useTareas } from '../context/TareasContext';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
-import { ETIQUETA_ESTADO } from '../utils/formato';
-import { citasDesdeTareas, serviciosDeCita } from '../utils/vistasGroomer';
+
+function obtenerNombreGroomer(usuario) {
+  if (usuario?.nombre?.trim()) {
+    return usuario.nombre.trim();
+  }
+
+  const correo = usuario?.correo?.trim().toLowerCase();
+
+  if (correo) {
+    const coincidencia = correo.match(/^groomer(\d+)@/);
+
+    if (coincidencia) {
+      return `Groomer ${coincidencia[1]}`;
+    }
+
+    return correo;
+  }
+
+  return 'Groomer asignado';
+}
 
 export default function DetalleCitaScreen({ navigation, route }) {
-  const { citaId } = route.params ?? {};
   const { usuario } = useAuth();
-  const { tareas } = useTareas();
-  const cita = useMemo(
-    () => citasDesdeTareas(tareas).find((item) => item.id === String(citaId)),
-    [tareas, citaId],
-  );
+  const { cita } = route.params ?? {};
 
   if (!cita) {
     return (
       <View style={styles.container}>
         <Text style={styles.title}>Cita no encontrada</Text>
-        <Text style={styles.petBreed}>
-          No está entre las citas recuperadas de tus tareas.
+
+        <Text style={styles.secondaryText}>
+          No fue posible recuperar la información de la cita.
         </Text>
+
+        <View style={styles.buttonContainer}>
+          <PrimaryButton
+            title="Regresar a citas"
+            onPress={() => navigation.goBack()}
+          />
+        </View>
       </View>
     );
   }
 
-  const servicios = serviciosDeCita(cita);
-  const horario = [cita.horaInicio, cita.horaFin].filter(Boolean).join(' - ');
+  const horario = [cita.horaInicio, cita.horaFin]
+    .filter(Boolean)
+    .join(' - ');
+
+  const nombreGroomer = obtenerNombreGroomer(usuario);
 
   return (
     <ScrollView
@@ -41,53 +63,66 @@ export default function DetalleCitaScreen({ navigation, route }) {
       <Text style={styles.title}>Detalle de cita</Text>
 
       <View style={styles.card}>
-        <Text style={styles.petName}>{cita.perro}</Text>
-        <Text style={styles.petBreed}>{cita.raza}</Text>
+        <Text style={styles.petName}>
+          {cita.perro || 'Sin nombre'}
+        </Text>
+
+        <Text style={styles.petBreed}>
+          {cita.raza || 'Sin raza'}
+        </Text>
 
         <View style={styles.separator} />
 
         <Text style={styles.label}>Cliente</Text>
-        <Text style={styles.value}>{cita.cliente}</Text>
+        <Text style={styles.value}>
+          {cita.cliente || 'Sin cliente'}
+        </Text>
 
         <Text style={styles.label}>Groomer asignado</Text>
-        <Text style={styles.value}>{usuario?.nombre || 'Sin nombre'}</Text>
-
-        <Text style={styles.label}>Servicio</Text>
         <Text style={styles.value}>
-          {servicios.length > 0 ? servicios.join(', ') : 'Sin servicio'}
+          {nombreGroomer}
         </Text>
 
         <Text style={styles.label}>Fecha</Text>
-        <Text style={styles.value}>{cita.fechaTexto}</Text>
+        <Text style={styles.value}>
+          {cita.fechaTexto || cita.fecha || 'Sin fecha'}
+        </Text>
 
         <Text style={styles.label}>Horario</Text>
-        <Text style={styles.value}>{horario || 'Sin horario'}</Text>
+        <Text style={styles.value}>
+          {horario || 'Sin horario'}
+        </Text>
+
+        <Text style={styles.label}>Servicio</Text>
+        <Text style={styles.value}>
+          {cita.servicio || 'Sin servicio registrado'}
+        </Text>
 
         <Text style={styles.label}>Estado de la cita</Text>
 
         <View style={styles.status}>
-          <EstadoBadge estado={cita.estado || 'sin estado'} />
+          <EstadoBadge
+            estado={cita.estado || 'sin estado'}
+          />
         </View>
 
-        <Text style={styles.label}>Tareas asignadas</Text>
-
-        {cita.tareas.map((tarea) => (
-          <View key={tarea.id} style={styles.task}>
-            <Text style={styles.taskTitle}>{tarea.nombre || 'Sin nombre'}</Text>
-            <Text style={styles.taskText}>
-              {[tarea.horaInicio, tarea.horaFin].filter(Boolean).join(' - ') ||
-                'Sin horario'}
+        {cita.observaciones ? (
+          <>
+            <Text style={styles.label}>Observaciones</Text>
+            <Text style={styles.value}>
+              {cita.observaciones}
             </Text>
-            <Text style={styles.taskStatus}>
-              Tarea: {ETIQUETA_ESTADO[tarea.estado] ?? (tarea.estado || 'Sin estado')}
-            </Text>
-          </View>
-        ))}
+          </>
+        ) : null}
 
         <View style={styles.buttonContainer}>
           <PrimaryButton
             title="Registrar atención"
-            onPress={() => navigation.navigate('Historial', { citaId: cita.id })}
+            onPress={() =>
+              navigation.navigate('Historial', {
+                citaId: cita.id,
+              })
+            }
           />
         </View>
 
@@ -159,51 +194,15 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 
-  secondaryValue: {
-    fontSize: 13,
+  secondaryText: {
+    fontSize: 14,
     color: colors.textSecondary,
-    marginTop: 3,
+    marginHorizontal: spacing.lg,
   },
 
   status: {
     alignSelf: 'flex-start',
-    backgroundColor: colors.primaryLight,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: 20,
     marginTop: spacing.sm,
-  },
-
-  statusText: {
-    color: colors.completed,
-    fontWeight: '700',
-    fontSize: 13,
-  },
-
-  task: {
-    backgroundColor: colors.primaryLight,
-    borderRadius: 14,
-    padding: spacing.md,
-    marginTop: spacing.sm,
-  },
-
-  taskTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: colors.textPrimary,
-  },
-
-  taskText: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    marginTop: 4,
-  },
-
-  taskStatus: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.completed,
-    marginTop: 4,
   },
 
   buttonContainer: {
