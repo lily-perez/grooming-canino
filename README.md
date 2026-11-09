@@ -1,137 +1,109 @@
-Integrantes:
+# Sistema Multiplataforma de Gestión de Grooming Canino
 
-Manuel Alejandro Mejia López - ML251320
-Lily Astrid Pérez Avelar - PA251527
-Ariel Omar Nunfio Méndez - NM253359
-Levi Asael Valle Palma - VP253612
-Wilber Larris Carranza Campos - CC253652
+## Integrantes
 
-Sistema Multiplataforma de Gestión de Grooming Canino
+- Manuel Alejandro Mejia López - ML251320
+- Lily Astrid Pérez Avelar - PA251527
+- Ariel Omar Nunfio Méndez - NM253359
+- Levi Asael Valle Palma - VP253612
+- Wilber Larris Carranza Campos - CC253652
 
 Plataforma multiplataforma para la gestión operativa de un negocio de grooming canino. Centraliza clientes, perros, citas, servicios, tareas, disponibilidad de Groomers, historial de atención y un Dashboard administrativo, tanto en web como en aplicativo móvil.
 
 Proyecto de la asignatura DPS941 — Diseño y Programación de Software Multiplataforma.
 
-Objetivo
+## Objetivo
 
 Reducir la dependencia de WhatsApp, llamadas y agenda física al coordinar atenciones. El sistema permite registrar dueños y mascotas, programar citas con uno o varios servicios, asignar Groomers mediante tareas, consultar disponibilidad, finalizar atenciones y revisar métricas operativas.
 
 La solución contempla:
 
-Una plataforma web orientada principalmente al Administrador.
+- Una plataforma web orientada principalmente al Administrador.
+- Una aplicación móvil orientada a los Groomers y seguimiento en movilidad.
 
-Una aplicación móvil orientada a los Groomers y seguimiento en movilidad.
-
-Estado funcional
+## Estado funcional
 
 Etapa 3 — Integración Web y Desarrollo Móvil.
 
 Módulos disponibles en la solución:
 
-Autenticación, registro y control de roles.
+- Autenticación, registro y control de roles.
+- Usuarios y gestión del personal.
+- Clientes y perros.
+- Servicios y catálogo general.
+- Citas y asignación de tareas.
+- Disponibilidad y horarios de Groomers.
+- Historial / Registro de Atención.
+- Dashboard administrativo.
+- Módulos Móviles (Autenticación, Historial/Inicio y Tareas).
 
-Usuarios y gestión del personal.
-
-Clientes y perros.
-
-Servicios y catálogo general.
-
-Citas y asignación de tareas.
-
-Disponibilidad y horarios de Groomers.
-
-Historial / Registro de Atención.
-
-Dashboard administrativo.
-
-Módulos Móviles (Autenticación, Historial/Inicio y Tareas).
-
-La ruta / redirige a /login.
+La ruta `/` redirige a `/login`.
 
 El Groomer consulta y actualiza sus tareas asignadas desde sus vistas correspondientes.
 
-Roles
+## Roles
 
-Administrador: gestiona usuarios, clientes, perros, servicios, citas, horarios, asignaciones, historial y Dashboard.
+**Administrador:** gestiona usuarios, clientes, perros, servicios, citas, horarios, asignaciones, historial y Dashboard.
 
-Groomer: usuario con rol = groomer. Consulta y actualiza sus propias tareas. No administra el catálogo general.
+**Groomer:** usuario con `rol = groomer`. Consulta y actualiza sus propias tareas. No administra el catálogo general.
 
-Funcionalidades principales
+## Funcionalidades principales
 
-Registro, inicio de sesión y rutas protegidas según rol.
+- Registro, inicio de sesión y rutas protegidas según rol.
+- Gestión de usuarios, clientes, perros, servicios, citas, tareas y horarios.
+- Relación Cliente → Perro → Cita. La cita guarda `perroId`; el cliente se obtiene a través del perro.
+- Citas con uno o varios servicios y `horaFinEstimada` calculada en servidor.
+- Tareas asociadas a una cita, con un Groomer por tarea.
+- Disponibilidad de Groomers calculada a partir de horarios y ocupaciones.
 
-Gestión de usuarios, clientes, perros, servicios, citas, tareas y horarios.
-
-Relación Cliente → Perro → Cita. La cita guarda perroId; el cliente se obtiene a través del perro.
-
-Citas con uno o varios servicios y horaFinEstimada calculada en servidor.
-
-Tareas asociadas a una cita, con un Groomer por tarea.
-
-Disponibilidad de Groomers calculada a partir de horarios y ocupaciones.
-
-Dashboard administrativo
+## Dashboard administrativo
 
 Resumen operativo calculado a partir de citas, tareas, servicios, clientes, perros e historial.
 
 Incluye:
 
-Métricas de citas de hoy, de la semana y del mes.
+- Métricas de citas de hoy, de la semana y del mes.
+- Filtros Hoy, Semana y Mes.
+- Cantidad de citas programadas, en proceso, completadas y canceladas.
+- Tareas activas.
+- Servicios más solicitados.
+- Clientes más frecuentes.
+- Gráfico de citas por día.
+- Próximas citas y actividad reciente.
 
-Filtros Hoy, Semana y Mes.
-
-Cantidad de citas programadas, en proceso, completadas y canceladas.
-
-Tareas activas.
-
-Servicios más solicitados.
-
-Clientes más frecuentes.
-
-Gráfico de citas por día.
-
-Próximas citas y actividad reciente.
-
-Historial / Registro de Atención
+## Historial / Registro de Atención
 
 Al finalizar una cita en proceso con todas sus tareas completadas:
 
-Se crea un registro de atención.
+- Se crea un registro de atención.
+- La cita pasa a estado completada.
+- El registro queda disponible en el historial y en su detalle.
 
-La cita pasa a estado completada.
-
-El registro queda disponible en el historial y en su detalle.
-
- Etapa Móvil (Aplicación Móvil)
+## Etapa Móvil (Aplicación Móvil)
 
 Se ha integrado la capa móvil para la gestión operativa y consulta en dispositivos móviles.
 
- Módulos e Integraciones Móviles
+## Módulos e Integraciones Móviles
 
-Autenticación y Roles (feature/mobile-autenticacion-roles): Inicio de sesión y asignación de permisos según el rol del usuario en dispositivos móviles.
+**Autenticación y Roles (`feature/mobile-autenticacion-roles`):** Inicio de sesión y asignación de permisos según el rol del usuario en dispositivos móviles.
 
-Historial e Inicio (feature/mobile-home-historial): Pantalla principal móvil e historial de atenciones y servicios realizados.
+**Historial e Inicio (`feature/mobile-home-historial`):** Pantalla principal móvil e historial de atenciones y servicios realizados.
 
-Gestión de Tareas Móvil (feature/tareas-movil): Panel interactivo para la visualización, seguimiento y actualización del estado de tareas asignadas al personal en movimiento.
+**Gestión de Tareas Móvil (`feature/tareas-movil`):** Panel interactivo para la visualización, seguimiento y actualización del estado de tareas asignadas al personal en movimiento.
 
-Tecnologías
+## Tecnologías
 
-JavaScript
+- JavaScript
+- React
+- Next.js 16.3.4 (App Router)
+- Tailwind CSS
+- Context API
+- API REST con Route Handlers de Next.js
+- MockAPI como persistencia temporal del servidor
 
-React
+## Arquitectura
 
-Next.js 16.3.4 (App Router)
-
-Tailwind CSS
-
-Context API
-
-API REST con Route Handlers de Next.js
-
-MockAPI como persistencia temporal del servidor
-
-Arquitectura
-
+```text
 UI
 → Hook / Context
 → Repository
@@ -142,18 +114,19 @@ UI
 → Adapter
 → mockApiClient
 → MockAPI
-
+```
 
 El navegador no consume MockAPI de forma directa.
 
-Los services del cliente llaman a la API interna de Next.js (/api/*).
+Los services del cliente llaman a la API interna de Next.js (`/api/*`).
 
 Los repositories aíslan el acceso a datos.
 
 Los permisos se validan en los Route Handlers, no solo en la interfaz.
 
-Estructura del proyecto
+## Estructura del proyecto
 
+```text
 src/
 ├── app/                 Rutas web y Route Handlers
 │   ├── admin/
@@ -169,12 +142,13 @@ src/
 │   └── reglas/
 ├── services/            Cliente HTTP hacia /api/*
 └── utils/               Validaciones y utilidades
+```
 
-
-Persistencia
+## Persistencia
 
 MockAPI se usa como persistencia temporal. Recursos actuales:
 
+```text
 /usuarios
 /servicios
 /tareas
@@ -183,51 +157,56 @@ MockAPI se usa como persistencia temporal. Recursos actuales:
 /clientes
 /perros
 /historial
+```
 
+## Requisitos previos
 
-Requisitos previos
+- Node.js compatible con Next.js 16
+- npm
 
-Node.js compatible con Next.js 16
+## Variables de entorno
 
-npm
+Copiar `.env.example` a `.env.local` y completar los valores locales:
 
-Variables de entorno
-
-Copiar .env.example a .env.local y completar los valores locales:
-
+```bash
 cp .env.example .env.local
+```
 
-
+```env
 MOCK_API_BASE_URL=
 AUTH_SESSION_SECRET=
+```
 
+## Instalación y ejecución
 
-Instalación y ejecución
-
+```bash
 npm install
 npm run dev
+```
 
+La aplicación queda disponible en `http://localhost:3000`.
 
-La aplicación queda disponible en http://localhost:3000.
+## Comandos disponibles
 
-Comandos disponibles
-
+```bash
 npm install      # instala dependencias
 npm run dev      # entorno de desarrollo
 npm run lint     # análisis estático
 npm run build    # compilación de producción
+```
 
+## Rutas principales
 
-Rutas principales
+### Públicas
 
-Públicas:
-
+```text
 /login
 /registro
+```
 
+### Administrador
 
-Administrador:
-
+```text
 /admin/dashboard
 /admin/usuarios
 /admin/servicios
@@ -236,15 +215,21 @@ Administrador:
 /admin/clientes
 /admin/perros
 /admin/historial
+```
 
+### Groomer
 
-Groomer:
-
+```text
 /groomer/dashboard
 /groomer/servicios
+```
 
 ## Entregables de la Etapa 3 – Avance 1
 - **Código fuente:** [Aplicación React Native](./mobile/)
 - **Video demostrativo:** [Ver video en SharePoint](https://udbedu-my.sharepoint.com/:v:/g/personal/pa251527_alumno_udb_edu_sv/IQBAAd2ySAyhT6Bdt7TC8iEiAZmwJVWNnYC8wLna_0-7TUo?e=MRR7xf)
 - **Documento PDF:** [DPS Etapa 3 Implementacion Movil.pdf](https://github.com/user-attachments/files/33776560/DPS.Etapa.3.Implementacion.Movil.pdf)
 
+## Entregables de la Etapa 3 – Avance 2
+- **Código fuente:** [Aplicación React Native](./mobile/)
+- **Video demostrativo:** [Ver video](AQUI_EL_ENLACE_DEL_VIDEO)
+- **Documento PDF:** [Avance 2: Integración Firebase Authentication y Firestore](./docs/Avance%202%20Integración%20Firebase%20Authentication%20y%20Firestore.pdf)
