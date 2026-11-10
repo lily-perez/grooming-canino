@@ -231,6 +231,6 @@ npm run build    # compilación de producción
 
 ## Entregables de la Etapa 3 – Avance 2
 - **Código fuente:** [Aplicación React Native](./mobile/)
-- **Video demostrativo:** [Ver video](AQUI_EL_ENLACE_DEL_VIDEO)
+- **Video demostrativo:** [Ver video]https://udbedu-my.sharepoint.com/:v:/g/personal/cc253652_alumno_udb_edu_sv/IQCHwS4BC4jyTpe2jbBpZpYtARMkS4aV7DKV7rRCYjLZmBI)
 - **Documento PDF:** [Avance 2: Integración Firebase Authentication y Firestore](https://github.com/user-attachments/files/34580670/Avance.2.Integracion.Firebase.Authentication.y.Firestore.pdf)
 
