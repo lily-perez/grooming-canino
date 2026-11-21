@@ -1,8 +1,9 @@
-import React, { createContext, useState, useContext, useCallback } from 'react';
-import { 
-  finalizarCita, 
-  registrarAtencion as guardarHistorialFirestore, 
-  obtenerHistorial as obtenerHistorialFirestore 
+import React, { createContext, useCallback, useContext, useState } from 'react';
+
+import {
+  finalizarCita,
+  obtenerHistorial as obtenerHistorialFirestore,
+  registrarAtencion as guardarHistorialFirestore,
 } from '../services/historialService';
 
 const HistorialContext = createContext(null);
@@ -16,12 +17,18 @@ export const HistorialProvider = ({ children }) => {
     setEstaGuardando(true);
 
     try {
-      await guardarHistorialFirestore(datosAtencion);
-      await finalizarCita(citaId, datosAtencion.observaciones);
-      
-      return { exito: true };
+      const registroGuardado = await guardarHistorialFirestore({
+        ...datosAtencion,
+        citaId: datosAtencion?.citaId ?? citaId,
+      });
+
+      if (typeof finalizarCita === 'function' && citaId) {
+        await finalizarCita(citaId, datosAtencion?.observaciones ?? '');
+      }
+
+      return { exito: true, data: registroGuardado };
     } catch (error) {
-      console.error("Error en registrarAtencion Context:", error);
+      console.error('Error en registrarAtencion Context:', error);
       return { exito: false, error: error.message };
     } finally {
       setEstaGuardando(false);
@@ -30,24 +37,27 @@ export const HistorialProvider = ({ children }) => {
 
   const cargarHistorial = useCallback(async (groomerId = null) => {
     setCargandoHistorial(true);
+
     try {
       const data = await obtenerHistorialFirestore(groomerId);
       setHistorial(data);
     } catch (error) {
-      console.error("Error cargando el historial:", error);
+      console.error('Error cargando el historial:', error);
     } finally {
       setCargandoHistorial(false);
     }
   }, []);
 
   return (
-    <HistorialContext.Provider value={{ 
-      registrarAtencion, 
-      estaGuardando,
-      historial,
-      cargandoHistorial,
-      cargarHistorial
-    }}>
+    <HistorialContext.Provider
+      value={{
+        registrarAtencion,
+        estaGuardando,
+        historial,
+        cargandoHistorial,
+        cargarHistorial,
+      }}
+    >
       {children}
     </HistorialContext.Provider>
   );
