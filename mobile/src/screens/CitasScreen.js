@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+
 import {
   ActivityIndicator,
   Pressable,
@@ -17,64 +23,96 @@ import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { fechaLocalISO } from '../utils/vistasGroomer';
 
-export default function CitasScreen({ navigation }) {
-  const { uid } = useAuth();
+export default function CitasScreen({
+  navigation,
+}) {
+  const {
+    uid,
+    rol,
+    activo,
+    cargando: cargandoAuth,
+  } = useAuth();
 
   const [citas, setCitas] = useState([]);
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState('');
-  const [filtroActivo, setFiltroActivo] = useState('hoy');
+  const [cargando, setCargando] =
+    useState(true);
+  const [error, setError] =
+    useState('');
+  const [filtroActivo, setFiltroActivo] =
+    useState('hoy');
 
   const fechaActual = fechaLocalISO();
 
-  const cargarCitas = useCallback(async () => {
-    if (!uid) {
-      setCitas([]);
-      setError('No se identificó al usuario autenticado.');
-      setCargando(false);
-      return;
-    }
+  const usuarioPuedeConsultar =
+    !cargandoAuth &&
+    Boolean(uid) &&
+    rol === 'groomer' &&
+    activo === true;
 
-    try {
-      setError('');
-      setCargando(true);
-
-      const resultado = await obtenerCitasAsignadas(uid);
-
-      setCitas(resultado);
-    } catch (err) {
-      console.error(
-        'Error cargando citas desde Firestore:',
-        err,
-      );
-
-      setError(
-        err?.message ||
-          'No se pudieron consultar las citas desde Firestore.',
-      );
-    } finally {
-      setCargando(false);
-    }
-  }, [uid]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function cargarAlMontar() {
-      if (!uid) {
-        await Promise.resolve();
-        if (cancelled) {
-          return;
-        }
-
+  const cargarCitas = useCallback(
+    async () => {
+      if (!usuarioPuedeConsultar) {
         setCitas([]);
-        setError('No se identificó al usuario autenticado.');
+        setError('');
         setCargando(false);
         return;
       }
 
       try {
-        const resultado = await obtenerCitasAsignadas(uid);
+        setError('');
+        setCargando(true);
+
+        const resultado =
+          await obtenerCitasAsignadas(
+            uid,
+          );
+
+        setCitas(resultado);
+      } catch (err) {
+        console.error(
+          'Error cargando citas desde Firestore:',
+          err,
+        );
+
+        setError(
+          err?.message ||
+            'No se pudieron consultar las citas desde Firestore.',
+        );
+      } finally {
+        setCargando(false);
+      }
+    },
+    [uid, usuarioPuedeConsultar],
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function cargarAlMontar() {
+      if (cargandoAuth) {
+        return;
+      }
+
+      if (!usuarioPuedeConsultar) {
+        await Promise.resolve();
+
+        if (cancelled) {
+          return;
+        }
+
+        setCitas([]);
+        setError('');
+        setCargando(false);
+        return;
+      }
+
+      try {
+        setCargando(true);
+
+        const resultado =
+          await obtenerCitasAsignadas(
+            uid,
+          );
 
         if (cancelled) {
           return;
@@ -108,45 +146,78 @@ export default function CitasScreen({ navigation }) {
     return () => {
       cancelled = true;
     };
-  }, [uid]);
+  }, [
+    uid,
+    rol,
+    activo,
+    cargandoAuth,
+    usuarioPuedeConsultar,
+  ]);
 
   const citasFiltradas = useMemo(() => {
     return citas.filter((cita) => {
       if (filtroActivo === 'hoy') {
-        return cita.fecha === fechaActual;
+        return (
+          cita.fecha === fechaActual
+        );
       }
 
-      if (filtroActivo === 'proximas') {
-        return cita.fecha > fechaActual;
+      if (
+        filtroActivo === 'proximas'
+      ) {
+        return (
+          cita.fecha > fechaActual
+        );
       }
 
-      return cita.fecha && cita.fecha < fechaActual;
+      return (
+        cita.fecha &&
+        cita.fecha < fechaActual
+      );
     });
-  }, [citas, filtroActivo, fechaActual]);
+  }, [
+    citas,
+    filtroActivo,
+    fechaActual,
+  ]);
 
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={styles.contentContainer}
+      contentContainerStyle={
+        styles.contentContainer
+      }
       refreshControl={
         <RefreshControl
-          refreshing={cargando && citas.length > 0}
+          refreshing={
+            cargando &&
+            citas.length > 0
+          }
           onRefresh={cargarCitas}
           colors={[colors.primary]}
         />
       }
     >
-      <Text style={styles.title}>Mis citas</Text>
-
-      <Text style={styles.subtitle}>
-        Consulta las citas asignadas al Groomer.
+      <Text style={styles.title}>
+        Mis citas
       </Text>
 
-      <View style={styles.availabilityButton}>
+      <Text style={styles.subtitle}>
+        Consulta las citas asignadas al
+        Groomer.
+      </Text>
+
+      <View
+        style={
+          styles.availabilityButton
+        }
+      >
         <PrimaryButton
           title="Ver disponibilidad"
           onPress={() =>
-            navigation.navigate('Disponibilidad')
+            navigation.navigate(
+              'Disponibilidad',
+            )
           }
         />
       </View>
@@ -155,9 +226,12 @@ export default function CitasScreen({ navigation }) {
         <Pressable
           style={[
             styles.filter,
-            filtroActivo === 'hoy' && styles.filterActive,
+            filtroActivo === 'hoy' &&
+              styles.filterActive,
           ]}
-          onPress={() => setFiltroActivo('hoy')}
+          onPress={() =>
+            setFiltroActivo('hoy')
+          }
         >
           <Text
             style={[
@@ -173,15 +247,21 @@ export default function CitasScreen({ navigation }) {
         <Pressable
           style={[
             styles.filter,
-            filtroActivo === 'proximas' &&
+            filtroActivo ===
+              'proximas' &&
               styles.filterActive,
           ]}
-          onPress={() => setFiltroActivo('proximas')}
+          onPress={() =>
+            setFiltroActivo(
+              'proximas',
+            )
+          }
         >
           <Text
             style={[
               styles.filterText,
-              filtroActivo === 'proximas' &&
+              filtroActivo ===
+                'proximas' &&
                 styles.filterTextActive,
             ]}
           >
@@ -192,15 +272,21 @@ export default function CitasScreen({ navigation }) {
         <Pressable
           style={[
             styles.filter,
-            filtroActivo === 'pasadas' &&
+            filtroActivo ===
+              'pasadas' &&
               styles.filterActive,
           ]}
-          onPress={() => setFiltroActivo('pasadas')}
+          onPress={() =>
+            setFiltroActivo(
+              'pasadas',
+            )
+          }
         >
           <Text
             style={[
               styles.filterText,
-              filtroActivo === 'pasadas' &&
+              filtroActivo ===
+                'pasadas' &&
                 styles.filterTextActive,
             ]}
           >
@@ -209,80 +295,191 @@ export default function CitasScreen({ navigation }) {
         </Pressable>
       </View>
 
-      {cargando && citas.length === 0 ? (
+      {cargando &&
+      citas.length === 0 ? (
         <View style={styles.emptyCard}>
-          <ActivityIndicator color={colors.primary} />
+          <ActivityIndicator
+            color={colors.primary}
+          />
 
-          <Text style={styles.emptyText}>
-            Cargando citas desde Firestore...
+          <Text
+            style={styles.emptyText}
+          >
+            Cargando citas desde
+            Firestore...
           </Text>
         </View>
       ) : error ? (
         <View style={styles.emptyCard}>
-          <Text style={styles.emptyTitle}>
+          <Text
+            style={styles.emptyTitle}
+          >
             No se pudieron cargar
           </Text>
 
-          <Text style={styles.emptyText}>{error}</Text>
+          <Text
+            style={styles.emptyText}
+          >
+            {error}
+          </Text>
 
-          <View style={styles.buttonContainer}>
+          <View
+            style={
+              styles.buttonContainer
+            }
+          >
             <PrimaryButton
               title="Reintentar"
               onPress={cargarCitas}
             />
           </View>
         </View>
-      ) : citasFiltradas.length === 0 ? (
+      ) : citasFiltradas.length ===
+        0 ? (
         <View style={styles.emptyCard}>
-          <Text style={styles.emptyTitle}>Sin citas</Text>
+          <Text
+            style={styles.emptyTitle}
+          >
+            Sin citas
+          </Text>
 
-          <Text style={styles.emptyText}>
-            No hay citas disponibles en esta sección.
+          <Text
+            style={styles.emptyText}
+          >
+            No hay citas disponibles
+            en esta sección.
           </Text>
         </View>
       ) : (
         citasFiltradas.map((cita) => (
-          <View key={cita.id} style={styles.card}>
-            <Text style={styles.date}>
-              {cita.fechaTexto}
-            </Text>
+          <View
+            key={cita.id}
+            style={styles.card}
+          >
+            <View
+              style={styles.cardHeader}
+            >
+              <View
+                style={styles.petInfo}
+              >
+                <Text
+                  style={
+                    styles.petName
+                  }
+                >
+                  {cita.perro ||
+                    'Sin nombre'}
+                </Text>
 
-            <Text style={styles.time}>
-              {cita.horaInicio || 'Sin hora'} -{' '}
-              {cita.horaFin || 'Sin hora'}
-            </Text>
+                <Text
+                  style={
+                    styles.petBreed
+                  }
+                >
+                  {cita.raza ||
+                    'Sin raza'}
+                </Text>
+              </View>
 
-            <Text style={styles.petName}>
-              {cita.perro || 'Sin nombre'}
-            </Text>
-
-            <Text style={styles.petBreed}>
-              {cita.raza || 'Sin raza'}
-            </Text>
-
-            <View style={styles.separator} />
-
-            <Text style={styles.serviceLabel}>
-              Cliente
-            </Text>
-
-            <Text style={styles.service}>
-              {cita.cliente || 'Sin cliente'}
-            </Text>
-
-            <View style={styles.status}>
-              <EstadoBadge
-                estado={cita.estado || 'sin estado'}
-              />
+              <View
+                style={styles.status}
+              >
+                <EstadoBadge
+                  estado={
+                    cita.estado ||
+                    'sin estado'
+                  }
+                />
+              </View>
             </View>
 
-            <View style={styles.buttonContainer}>
+            <View
+              style={
+                styles.separator
+              }
+            />
+
+            <View
+              style={styles.infoRow}
+            >
+              <Text
+                style={
+                  styles.infoLabel
+                }
+              >
+                Fecha
+              </Text>
+
+              <Text
+                style={
+                  styles.infoValue
+                }
+              >
+                {cita.fechaTexto ||
+                  cita.fecha ||
+                  'Sin fecha'}
+              </Text>
+            </View>
+
+            <View
+              style={styles.infoRow}
+            >
+              <Text
+                style={
+                  styles.infoLabel
+                }
+              >
+                Horario
+              </Text>
+
+              <Text
+                style={
+                  styles.infoValue
+                }
+              >
+                {cita.horaInicio ||
+                  'Sin hora'}{' '}
+                -{' '}
+                {cita.horaFin ||
+                  'Sin hora'}
+              </Text>
+            </View>
+
+            <View
+              style={styles.infoRow}
+            >
+              <Text
+                style={
+                  styles.infoLabel
+                }
+              >
+                Cliente
+              </Text>
+
+              <Text
+                style={
+                  styles.infoValue
+                }
+              >
+                {cita.cliente ||
+                  'Sin cliente'}
+              </Text>
+            </View>
+
+            <View
+              style={
+                styles.detailButton
+              }
+            >
               <PrimaryButton
                 title="Ver detalle"
                 onPress={() =>
-                  navigation.navigate('DetalleCita', {
-                    cita,
-                  })
+                  navigation.navigate(
+                    'DetalleCita',
+                    {
+                      cita,
+                    },
+                  )
                 }
               />
             </View>
@@ -296,7 +493,8 @@ export default function CitasScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor:
+      colors.background,
   },
 
   contentContainer: {
@@ -332,21 +530,25 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: spacing.sm,
     borderRadius: 12,
-    backgroundColor: colors.surface,
+    backgroundColor:
+      colors.surface,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: colors.border,
   },
 
   filterActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    backgroundColor:
+      colors.primary,
+    borderColor:
+      colors.primary,
   },
 
   filterText: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.textSecondary,
+    color:
+      colors.textSecondary,
   },
 
   filterTextActive: {
@@ -355,59 +557,84 @@ const styles = StyleSheet.create({
   },
 
   card: {
-    backgroundColor: colors.surface,
+    backgroundColor:
+      colors.surface,
     borderRadius: 18,
     padding: spacing.lg,
+    marginBottom: spacing.md,
     elevation: 3,
-    marginBottom: spacing.md,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
   },
 
-  date: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.primary,
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent:
+      'space-between',
+    alignItems: 'flex-start',
   },
 
-  time: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.textSecondary,
-    marginTop: 3,
-    marginBottom: spacing.md,
+  petInfo: {
+    flex: 1,
+    paddingRight: spacing.sm,
   },
 
   petName: {
     fontSize: 22,
     fontWeight: '700',
-    color: colors.textPrimary,
+    color:
+      colors.textPrimary,
   },
 
   petBreed: {
     fontSize: 14,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-
-  separator: {
-    height: 1,
-    backgroundColor: colors.border,
-    marginVertical: spacing.md,
-  },
-
-  serviceLabel: {
-    fontSize: 13,
-    color: colors.textSecondary,
-  },
-
-  service: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.textPrimary,
+    color:
+      colors.textSecondary,
     marginTop: 3,
   },
 
   status: {
-    alignSelf: 'flex-start',
+    alignItems: 'flex-end',
+  },
+
+  separator: {
+    height: 1,
+    backgroundColor:
+      colors.border,
+    marginVertical: spacing.md,
+  },
+
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent:
+      'space-between',
+    alignItems: 'flex-start',
+    marginBottom: spacing.sm,
+  },
+
+  infoLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color:
+      colors.textSecondary,
+    marginRight: spacing.md,
+  },
+
+  infoValue: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '600',
+    color:
+      colors.textPrimary,
+    textAlign: 'right',
+  },
+
+  detailButton: {
     marginTop: spacing.md,
   },
 
@@ -416,7 +643,8 @@ const styles = StyleSheet.create({
   },
 
   emptyCard: {
-    backgroundColor: colors.surface,
+    backgroundColor:
+      colors.surface,
     borderRadius: 18,
     padding: spacing.xl,
     alignItems: 'center',
@@ -426,12 +654,14 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.textPrimary,
+    color:
+      colors.textPrimary,
   },
 
   emptyText: {
     fontSize: 14,
-    color: colors.textSecondary,
+    color:
+      colors.textSecondary,
     marginTop: spacing.sm,
     textAlign: 'center',
   },
