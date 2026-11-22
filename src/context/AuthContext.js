@@ -1,6 +1,14 @@
 "use client";
 
-import { createContext, useCallback, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { signOut } from "firebase/auth";
+import { auth } from "@/config/firebase";
 import { autenticacionRepository } from "@/repositories/autenticacionRepository";
 
 export const AuthContext = createContext(null);
@@ -16,8 +24,10 @@ export function AuthProvider({ children }) {
     try {
       const usuarioActual =
         await autenticacionRepository.obtenerUsuarioActual();
+
       setUsuario(usuarioActual);
       setError(null);
+
       return usuarioActual;
     } catch (errorPeticion) {
       setUsuario(null);
@@ -48,7 +58,11 @@ export function AuthProvider({ children }) {
       .catch((errorPeticion) => {
         if (activo) {
           setUsuario(null);
-          setError(errorPeticion.status === 401 ? null : errorPeticion);
+          setError(
+            errorPeticion.status === 401
+              ? null
+              : errorPeticion,
+          );
         }
       })
       .finally(() => {
@@ -69,7 +83,28 @@ export function AuthProvider({ children }) {
     try {
       const usuarioAutenticado =
         await autenticacionRepository.login(credenciales);
+
       setUsuario(usuarioAutenticado);
+
+      return usuarioAutenticado;
+    } catch (errorPeticion) {
+      setError(errorPeticion);
+      throw errorPeticion;
+    } finally {
+      setCargando(false);
+    }
+  }, []);
+
+  const loginGoogle = useCallback(async (idToken) => {
+    setCargando(true);
+    setError(null);
+
+    try {
+      const usuarioAutenticado =
+        await autenticacionRepository.loginGoogle(idToken);
+
+      setUsuario(usuarioAutenticado);
+
       return usuarioAutenticado;
     } catch (errorPeticion) {
       setError(errorPeticion);
@@ -98,6 +133,10 @@ export function AuthProvider({ children }) {
 
     try {
       await autenticacionRepository.cerrarSesion();
+
+      if (auth.currentUser) {
+        await signOut(auth);
+      }
     } finally {
       setUsuario(null);
       setError(null);
@@ -113,6 +152,7 @@ export function AuthProvider({ children }) {
       autenticado: Boolean(usuario),
       error,
       login,
+      loginGoogle,
       registrar,
       cerrarSesion,
       refrescarUsuario,
@@ -122,11 +162,16 @@ export function AuthProvider({ children }) {
       cargando,
       error,
       login,
+      loginGoogle,
       registrar,
       cerrarSesion,
       refrescarUsuario,
     ],
   );
 
-  return <AuthContext.Provider value={valor}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={valor}>
+      {children}
+    </AuthContext.Provider>
+  );
 }

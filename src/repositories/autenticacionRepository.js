@@ -5,13 +5,21 @@ export const autenticacionRepository = {
     const respuesta = await autenticacionService.registrar(datos);
     return respuesta.data.usuario;
   },
+
   async login(credenciales) {
     const respuesta = await autenticacionService.login(credenciales);
     return respuesta.data.usuario;
   },
+
+  async loginGoogle(idToken) {
+    const respuesta = await autenticacionService.loginGoogle(idToken);
+    return respuesta.data.usuario;
+  },
+
   cerrarSesion() {
     return autenticacionService.cerrarSesion();
   },
+
   async obtenerUsuarioActual() {
     const respuesta = await autenticacionService.obtenerUsuarioActual();
     return respuesta.data.usuario;
