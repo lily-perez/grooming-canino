@@ -13,6 +13,38 @@ export const CAMPOS_OBSERVACION = [
   "observaciones",
 ];
 
+function normalizarFecha(valor) {
+  if (!valor) return "";
+
+  if (typeof valor === "string") {
+    return valor.trim().slice(0, 10);
+  }
+
+  if (valor && typeof valor.toDate === "function") {
+    return valor.toDate().toISOString().slice(0, 10);
+  }
+
+  if (
+    typeof valor === "object" &&
+    typeof valor._seconds === "number"
+  ) {
+    return new Date(valor._seconds * 1000)
+      .toISOString()
+      .slice(0, 10);
+  }
+
+  if (
+    typeof valor === "object" &&
+    typeof valor.seconds === "number"
+  ) {
+    return new Date(valor.seconds * 1000)
+      .toISOString()
+      .slice(0, 10);
+  }
+
+  return "";
+}
+
 export function normalizarRegistroAtencionPersistido(registro) {
   if (!registro) {
     return null;
@@ -28,9 +60,16 @@ export function normalizarRegistroAtencionPersistido(registro) {
     id: registro.id,
     citaId: String(registro.citaId ?? "").trim(),
     perroId: String(registro.perroId ?? "").trim(),
-    registradoPorUsuarioId: String(registro.registradoPorUsuarioId ?? "").trim(),
+    registradoPorUsuarioId: String(
+      registro.registradoPorUsuarioId ??
+        registro.groomerUid ??
+        registro.groomerId ??
+        "",
+    ).trim(),
     ...observaciones,
-    fecha: String(registro.fecha ?? "").trim(),
+    fecha: normalizarFecha(
+      registro.fechaRegistro ?? registro.fecha,
+    ),
   };
 }
 
@@ -52,6 +91,7 @@ function payloadOficial(registro) {
 
 export async function listarRegistrosAtencionPersistidos() {
   const registros = await solicitarMockApi(RECURSO_HISTORIAL);
+
   return Array.isArray(registros)
     ? registros.map(normalizarRegistroAtencionPersistido)
     : [];
@@ -61,11 +101,13 @@ export async function obtenerRegistroAtencionPersistido(id) {
   const registro = await solicitarMockApi(
     `${RECURSO_HISTORIAL}/${encodeURIComponent(id)}`,
   );
+
   return normalizarRegistroAtencionPersistido(registro);
 }
 
 export async function obtenerRegistroAtencionPorCitaId(citaId) {
   const registros = await listarRegistrosAtencionPersistidos();
+
   return (
     registros.find(
       (registro) => String(registro.citaId) === String(citaId),
@@ -78,10 +120,14 @@ export async function crearRegistroAtencionPersistido(registro) {
     method: "POST",
     body: JSON.stringify(payloadOficial(registro)),
   });
+
   return normalizarRegistroAtencionPersistido(creado);
 }
 
-export async function actualizarRegistroAtencionPersistido(id, cambios) {
+export async function actualizarRegistroAtencionPersistido(
+  id,
+  cambios,
+) {
   const registro = await obtenerRegistroAtencionPersistido(id);
 
   if (!registro) {
@@ -103,7 +149,10 @@ export async function actualizarRegistroAtencionPersistido(id, cambios) {
 }
 
 export async function eliminarRegistroAtencionPersistido(id) {
-  await solicitarMockApi(`${RECURSO_HISTORIAL}/${encodeURIComponent(id)}`, {
-    method: "DELETE",
-  });
+  await solicitarMockApi(
+    `${RECURSO_HISTORIAL}/${encodeURIComponent(id)}`,
+    {
+      method: "DELETE",
+    },
+  );
 }
