@@ -8,203 +8,418 @@
 - Levi Asael Valle Palma - VP253612
 - Wilber Larris Carranza Campos - CC253652
 
-Plataforma multiplataforma para la gestión operativa de un negocio de grooming canino. Centraliza clientes, perros, citas, servicios, tareas, disponibilidad de Groomers, historial de atención y un Dashboard administrativo, tanto en web como en aplicativo móvil.
+Plataforma multiplataforma para la gestión operativa de un negocio de grooming canino. La solución centraliza clientes, perros, citas, servicios, tareas, disponibilidad de Groomers, historial de atención y métricas operativas mediante una plataforma web y una aplicación móvil.
 
-Proyecto de la asignatura DPS941 — Diseño y Programación de Software Multiplataforma.
+Proyecto desarrollado para la asignatura **DPS941 — Diseño y Programación de Software Multiplataforma**.
 
-## Objetivo
+---
 
-Reducir la dependencia de WhatsApp, llamadas y agenda física al coordinar atenciones. El sistema permite registrar dueños y mascotas, programar citas con uno o varios servicios, asignar Groomers mediante tareas, consultar disponibilidad, finalizar atenciones y revisar métricas operativas.
+# Objetivo
+
+Reducir la dependencia de WhatsApp, llamadas y agenda física para la coordinación de las atenciones de grooming.
+
+El sistema permite:
+
+- Registrar clientes y mascotas.
+- Gestionar servicios.
+- Programar citas.
+- Asignar tareas a Groomers.
+- Consultar disponibilidad.
+- Dar seguimiento al estado de las atenciones.
+- Registrar información del servicio realizado.
+- Consultar historial.
+- Visualizar métricas operativas.
 
 La solución contempla:
 
-- Una plataforma web orientada principalmente al Administrador.
-- Una aplicación móvil orientada a los Groomers y seguimiento en movilidad.
+- Una **plataforma web** orientada principalmente a la administración.
+- Una **aplicación móvil** orientada principalmente a los Groomers y al seguimiento operativo.
 
-## Estado funcional
+---
 
-Etapa 3 — Integración Web y Desarrollo Móvil.
+# Estado funcional
 
-Módulos disponibles en la solución:
+La solución integra los módulos principales requeridos para la gestión del negocio:
 
-- Autenticación, registro y control de roles.
-- Usuarios y gestión del personal.
-- Clientes y perros.
-- Servicios y catálogo general.
-- Citas y asignación de tareas.
+- Autenticación y control de roles.
+- Gestión de usuarios.
+- Gestión de clientes.
+- Gestión de perros.
+- Gestión de servicios.
+- Gestión de citas.
+- Asignación y seguimiento de tareas.
 - Disponibilidad y horarios de Groomers.
-- Historial / Registro de Atención.
+- Historial y Registro de Atención.
 - Dashboard administrativo.
-- Módulos Móviles (Autenticación, Historial/Inicio y Tareas).
+- Dashboard de Groomer.
+- Aplicación móvil integrada con Firebase.
 
-La ruta `/` redirige a `/login`.
+La ruta `/` de la aplicación web redirige a `/login`.
 
-El Groomer consulta y actualiza sus tareas asignadas desde sus vistas correspondientes.
+---
 
-## Roles
+# Roles
 
-**Administrador:** gestiona usuarios, clientes, perros, servicios, citas, horarios, asignaciones, historial y Dashboard.
+## Administrador
 
-**Groomer:** usuario con `rol = groomer`. Consulta y actualiza sus propias tareas. No administra el catálogo general.
+El Administrador puede gestionar:
 
-## Funcionalidades principales
+- Usuarios.
+- Clientes.
+- Perros.
+- Servicios.
+- Citas.
+- Groomers.
+- Horarios.
+- Asignaciones.
+- Historial.
+- Dashboard y métricas operativas.
 
-- Registro, inicio de sesión y rutas protegidas según rol.
-- Gestión de usuarios, clientes, perros, servicios, citas, tareas y horarios.
-- Relación Cliente → Perro → Cita. La cita guarda `perroId`; el cliente se obtiene a través del perro.
-- Citas con uno o varios servicios y `horaFinEstimada` calculada en servidor.
-- Tareas asociadas a una cita, con un Groomer por tarea.
-- Disponibilidad de Groomers calculada a partir de horarios y ocupaciones.
+## Groomer
 
-## Dashboard administrativo
+El Groomer accede a las funciones relacionadas con la atención y seguimiento operativo.
 
-Resumen operativo calculado a partir de citas, tareas, servicios, clientes, perros e historial.
+Puede:
+
+- Consultar sus citas.
+- Consultar tareas asignadas.
+- Actualizar el estado de sus tareas.
+- Consultar clientes y mascotas.
+- Registrar información de una atención.
+- Consultar historial.
+
+---
+
+# Funcionalidades principales
+
+- Registro e inicio de sesión.
+- Autenticación mediante correo electrónico y contraseña.
+- Autenticación mediante Google.
+- Control de acceso según rol.
+- Gestión de usuarios.
+- Gestión de clientes.
+- Gestión de perros.
+- Gestión del catálogo de servicios.
+- Creación y administración de citas.
+- Asignación de tareas a Groomers.
+- Consulta de disponibilidad.
+- Seguimiento del estado de las tareas.
+- Registro de atenciones.
+- Consulta del historial.
+- Dashboard administrativo.
+- Persistencia mediante Firebase.
+
+La relación principal de la información sigue el flujo:
+
+```text
+Cliente
+   ↓
+Perro
+   ↓
+Cita
+   ↓
+Servicios / Tareas
+   ↓
+Groomer
+   ↓
+Historial de atención
+```
+
+---
+
+# Dashboard administrativo
+
+El Dashboard presenta un resumen de la operación del negocio utilizando la información registrada en el sistema.
+
+Incluye información relacionada con:
+
+- Citas del día.
+- Citas de la semana.
+- Citas del mes.
+- Citas programadas.
+- Citas en proceso.
+- Citas completadas.
+- Citas canceladas.
+- Tareas activas.
+- Servicios solicitados.
+- Clientes.
+- Perros.
+- Próximas citas.
+- Actividad reciente.
+
+---
+
+# Historial / Registro de Atención
+
+El módulo de historial permite conservar información relacionada con las atenciones realizadas a las mascotas.
+
+Durante una atención se puede registrar información sobre:
+
+- Ojos.
+- Oídos.
+- Dientes.
+- Pelaje.
+- Comportamiento.
+- Uñas.
+- Puntualidad.
+- Observaciones.
+
+La información registrada queda disponible posteriormente para su consulta dentro del historial.
+
+---
+
+# Aplicación móvil
+
+La versión móvil fue desarrollada con **React Native y Expo** y está orientada principalmente al trabajo operativo de los Groomers.
+
+## Módulos móviles
+
+### Autenticación y Roles
+
+Permite iniciar sesión y controlar las funcionalidades disponibles según el usuario autenticado.
+
+### Inicio / Dashboard
+
+Presenta información general relacionada con las actividades del Groomer.
+
+### Citas
+
+Permite consultar citas asignadas y visualizar su información correspondiente.
+
+### Tareas
+
+Permite visualizar las tareas relacionadas con las citas y actualizar su estado.
+
+### Clientes y Perros
+
+Permite consultar y gestionar información relacionada con clientes y mascotas.
 
 Incluye:
 
-- Métricas de citas de hoy, de la semana y del mes.
-- Filtros Hoy, Semana y Mes.
-- Cantidad de citas programadas, en proceso, completadas y canceladas.
-- Tareas activas.
-- Servicios más solicitados.
-- Clientes más frecuentes.
-- Gráfico de citas por día.
-- Próximas citas y actividad reciente.
+- Registro de clientes.
+- Edición de clientes.
+- Registro de perros.
+- Edición de perros.
+- Consulta de la relación Cliente → Perro.
 
-## Historial / Registro de Atención
+### Historial
 
-Al finalizar una cita en proceso con todas sus tareas completadas:
+Permite registrar y consultar información relacionada con las atenciones realizadas.
 
-- Se crea un registro de atención.
-- La cita pasa a estado completada.
-- El registro queda disponible en el historial y en su detalle.
+---
 
-## Etapa Móvil (Aplicación Móvil)
+# Tecnologías utilizadas
 
-Se ha integrado la capa móvil para la gestión operativa y consulta en dispositivos móviles.
+## Plataforma Web
 
-## Módulos e Integraciones Móviles
+- JavaScript.
+- React.
+- Next.js 16.3.4.
+- App Router.
+- Tailwind CSS.
+- Context API.
+- Route Handlers de Next.js.
+- Firebase.
+- Firebase Admin SDK.
+- Vercel.
 
-**Autenticación y Roles (`feature/mobile-autenticacion-roles`):** Inicio de sesión y asignación de permisos según el rol del usuario en dispositivos móviles.
+## Plataforma Móvil
 
-**Historial e Inicio (`feature/mobile-home-historial`):** Pantalla principal móvil e historial de atenciones y servicios realizados.
+- React Native.
+- Expo.
+- JavaScript.
+- Context API.
+- Firebase SDK.
 
-**Gestión de Tareas Móvil (`feature/tareas-movil`):** Panel interactivo para la visualización, seguimiento y actualización del estado de tareas asignadas al personal en movimiento.
+## Servicios e infraestructura
 
-## Tecnologías
+- Firebase Authentication.
+- Autenticación mediante Google.
+- Cloud Firestore.
+- Firebase Admin SDK.
+- Vercel.
 
-- JavaScript
-- React
-- Next.js 16.3.4 (App Router)
-- Tailwind CSS
-- Context API
-- API REST con Route Handlers de Next.js
-- MockAPI como persistencia temporal del servidor
+---
 
-## Arquitectura
+# Arquitectura
 
-```text
-UI
-→ Hook / Context
-→ Repository
-→ Service
-→ /api/*
-→ Route Handler
-→ Validación + autorización
-→ Adapter
-→ mockApiClient
-→ MockAPI
-```
-
-El navegador no consume MockAPI de forma directa.
-
-Los services del cliente llaman a la API interna de Next.js (`/api/*`).
-
-Los repositories aíslan el acceso a datos.
-
-Los permisos se validan en los Route Handlers, no solo en la interfaz.
-
-## Estructura del proyecto
+## Arquitectura Web
 
 ```text
-src/
-├── app/                 Rutas web y Route Handlers
-│   ├── admin/
-│   ├── groomer/
-│   └── api/
-├── components/          Interfaz y pantallas de cada módulo
-├── context/             Estado compartido de sesión
-├── hooks/               Carga de datos y estados de UI
-├── repositories/        Acceso a datos desde el frontend
-├── server/              Autenticación, persistencia y reglas
-│   ├── autenticacion/
-│   ├── persistencia/
-│   └── reglas/
-├── services/            Cliente HTTP hacia /api/*
-└── utils/               Validaciones y utilidades
+Interfaz
+   ↓
+Hooks / Context
+   ↓
+Repositories / Services
+   ↓
+API interna de Next.js
+   ↓
+Route Handlers
+   ↓
+Validación y autorización
+   ↓
+Firebase
+   ↓
+Cloud Firestore
 ```
 
-## Persistencia
+La aplicación web utiliza Route Handlers de Next.js para ejecutar lógica del servidor, validaciones, autorización y comunicación con los servicios de Firebase.
 
-MockAPI se usa como persistencia temporal. Recursos actuales:
+## Arquitectura Móvil
 
 ```text
-/usuarios
-/servicios
-/tareas
-/citas
-/horarios
-/clientes
-/perros
-/historial
+Interfaz React Native
+   ↓
+Context / Services
+   ↓
+Firebase SDK
+   ↓
+Firebase Authentication
+   ↓
+Cloud Firestore
 ```
 
-## Requisitos previos
+La aplicación móvil utiliza Firebase para autenticación y persistencia de información.
 
-- Node.js compatible con Next.js 16
-- npm
+---
 
-## Variables de entorno
+# Estructura del proyecto
 
-Copiar `.env.example` a `.env.local` y completar los valores locales:
-
-```bash
-cp .env.example .env.local
+```text
+grooming-canino/
+│
+├── docs/
+│   └── mockups/
+│
+├── mobile/
+│
+├── public/
+│
+├── scripts/
+│
+├── src/
+│   ├── app/
+│   │   ├── admin/
+│   │   ├── groomer/
+│   │   └── api/
+│   ├── components/
+│   ├── config/
+│   ├── context/
+│   ├── hooks/
+│   ├── repositories/
+│   ├── server/
+│   ├── services/
+│   └── utils/
+│
+├── firebase.json
+├── firestore.rules
+├── package.json
+└── README.md
 ```
 
-```env
-MOCK_API_BASE_URL=
-AUTH_SESSION_SECRET=
+---
+
+# Persistencia
+
+La solución final utiliza **Cloud Firestore** para almacenar la información principal del sistema.
+
+Entre los tipos de información gestionados se encuentran:
+
+```text
+usuarios
+servicios
+tareas
+citas
+horarios
+clientes
+perros
+historial
 ```
 
-## Instalación y ejecución
+La integración con Firebase permite que los módulos web y móvil trabajen con información almacenada dentro del proyecto Firebase de Grooming Canino.
+
+---
+
+# Autenticación
+
+La solución incorpora autenticación mediante:
+
+- Correo electrónico y contraseña.
+- Google.
+
+Firebase Authentication se utiliza como servicio de autenticación.
+
+El sistema utiliza la información del usuario autenticado y su rol para determinar las vistas y funcionalidades disponibles.
+
+---
+
+# Requisitos previos
+
+Para ejecutar la aplicación web:
+
+- Node.js compatible con Next.js 16.
+- npm.
+
+Para ejecutar la aplicación móvil:
+
+- Node.js.
+- npm.
+- Expo.
+
+---
+
+# Instalación y ejecución local de la aplicación web
+
+Desde la carpeta raíz del proyecto:
 
 ```bash
 npm install
 npm run dev
 ```
 
-La aplicación queda disponible en `http://localhost:3000`.
+La aplicación web queda disponible localmente en:
+
+```text
+http://localhost:3000
+```
+
+> Este enlace corresponde únicamente al entorno local de desarrollo. La versión pública del proyecto se encuentra desplegada en Vercel.
 
 ## Comandos disponibles
 
 ```bash
-npm install      # instala dependencias
-npm run dev      # entorno de desarrollo
-npm run lint     # análisis estático
-npm run build    # compilación de producción
+npm install      # Instala las dependencias
+npm run dev      # Ejecuta el entorno de desarrollo
+npm run lint     # Ejecuta el análisis estático
+npm run build    # Genera la compilación de producción
 ```
 
-## Rutas principales
+---
 
-### Públicas
+# Instalación y ejecución de la aplicación móvil
+
+Desde la carpeta raíz del proyecto:
+
+```bash
+cd mobile
+npm install
+npx expo start
+```
+
+La aplicación puede ejecutarse mediante Expo Go o mediante un entorno compatible con Expo.
+
+---
+
+# Rutas principales de la aplicación web
+
+## Públicas
 
 ```text
 /login
 /registro
 ```
 
-### Administrador
+## Administrador
 
 ```text
 /admin/dashboard
@@ -217,23 +432,170 @@ npm run build    # compilación de producción
 /admin/historial
 ```
 
-### Groomer
+## Groomer
 
 ```text
 /groomer/dashboard
 /groomer/servicios
 ```
 
-## Entregables de la Etapa 3 – Avance 1
+---
+
+# Entregables de la Etapa 3 – Avance 1
+
+Los siguientes recursos corresponden al primer avance de la Etapa 3.
+
 - **Código fuente:** [Aplicación React Native](./mobile/)
 - **Video demostrativo:** [Ver video en SharePoint](https://udbedu-my.sharepoint.com/:v:/g/personal/pa251527_alumno_udb_edu_sv/IQBAAd2ySAyhT6Bdt7TC8iEiAZmwJVWNnYC8wLna_0-7TUo?e=MRR7xf)
 - **Documento PDF:** [DPS Etapa 3 Implementacion Movil.pdf](https://github.com/user-attachments/files/33776560/DPS.Etapa.3.Implementacion.Movil.pdf)
 
-## Entregables de la Etapa 3 – Avance 2
+---
+
+# Entregables de la Etapa 3 – Avance 2
+
+Los siguientes recursos corresponden al segundo avance de la Etapa 3.
+
 - **Código fuente:** [Aplicación React Native](./mobile/)
 - **Video demostrativo:** [Ver video](https://udbedu-my.sharepoint.com/:v:/g/personal/cc253652_alumno_udb_edu_sv/IQCHwS4BC4jyTpe2jbBpZpYtARMkS4aV7DKV7rRCYjLZmBI)
 - **Documento PDF:** [Avance 2: Integración Firebase Authentication y Firestore](https://github.com/user-attachments/files/34580670/Avance.2.Integracion.Firebase.Authentication.y.Firestore.pdf)
-## Licencia
 
-Este proyecto está bajo la licencia [Creative Commons Atribución 4.0 Internacional (CC BY 4.0)](./LICENSE).
-Puedes usarlo, compartirlo y adaptarlo siempre que se dé el crédito correspondiente a sus autores.
+---
+
+# Etapa 3: Entrega Final
+
+La entrega final corresponde a la integración completa de la solución multiplataforma de **Grooming Canino**, incorporando la versión web desarrollada con React y Next.js, la aplicación móvil desarrollada con React Native y la integración de Firebase.
+
+## Versión web
+
+La plataforma web fue desarrollada con **React + Next.js** y se encuentra desplegada públicamente mediante Vercel.
+
+[Ver Grooming Canino en Vercel](https://grooming-canino.vercel.app)
+
+La plataforma web incluye módulos de:
+
+- Autenticación.
+- Usuarios.
+- Clientes.
+- Perros.
+- Servicios.
+- Citas.
+- Groomers.
+- Historial.
+- Dashboard administrativo.
+
+## Versión móvil
+
+La aplicación móvil fue desarrollada con **React Native + Expo** y utiliza Firebase para autenticación y gestión de información.
+
+[Ver código fuente de la aplicación móvil](./mobile/)
+
+Incluye módulos de:
+
+- Autenticación.
+- Inicio / Dashboard.
+- Citas.
+- Tareas.
+- Clientes.
+- Perros.
+- Historial.
+
+## Firebase
+
+La solución utiliza el proyecto Firebase **grooming-canino-udb** para servicios de autenticación y persistencia.
+
+Servicios utilizados:
+
+- Firebase Authentication.
+- Autenticación mediante Google.
+- Cloud Firestore.
+- Firebase Admin SDK en la plataforma web.
+
+La aplicación web y la aplicación móvil utilizan Firebase para autenticación y persistencia de la información.
+
+---
+
+## Prototipo completo en Figma
+
+El diseño completo desarrollado durante la **Etapa 1** puede consultarse en el siguiente enlace.
+
+Los mockups fueron utilizados como referencia visual para el desarrollo del sistema. La implementación final conserva la línea general de diseño, aunque presenta ajustes en distribución, navegación, componentes y funcionalidades derivados de la integración y evolución del proyecto.
+
+[Ver diseño completo en Figma](https://www.figma.com/design/MFM54o5ls92mNKkt0ylRB2/Visual-Mockup-for-PetStyle-Grooming--copia-?node-id=0-1)
+
+---
+
+# Enlaces de la Entrega Final
+
+- **Repositorio GitHub:** https://github.com/lily-perez/grooming-canino
+- **Aplicación web en Vercel:** https://grooming-canino.vercel.app
+- **Aplicación móvil:** [Código fuente React Native](./mobile/)
+- **Mockups:** [Ver carpeta de mockups](./docs/mockups/)
+- **Prototipo Figma:** https://www.figma.com/design/MFM54o5ls92mNKkt0ylRB2/Visual-Mockup-for-PetStyle-Grooming--copia-?node-id=0-1
+- **Licencia Creative Commons:** [Consultar licencia](./LICENCESE)
+
+---
+
+# Licencia
+
+Este proyecto se distribuye bajo la licencia **Creative Commons Atribución 4.0 Internacional — CC BY 4.0**.
+
+[Consultar archivo de licencia](./LICENCESE)
+
+El proyecto puede utilizarse, compartirse y adaptarse siempre que se otorgue el crédito correspondiente a sus autores.
+
+---
+
+# Mockups de Figma
+
+Los siguientes mockups corresponden a la propuesta visual desarrollada durante la **Etapa 1** y fueron utilizados como referencia para el desarrollo de la solución final.
+
+Durante la implementación se realizaron ajustes de distribución, navegación y componentes para adaptarlos a los requerimientos funcionales finales de las versiones web y móvil.
+
+## Mockups Web
+
+### Inicio de sesión
+
+<img src="./docs/mockups/login.png" alt="Mockup Login Web" width="500"/>
+
+### Servicios y tareas
+
+<img src="./docs/mockups/servicios-tareas.png" alt="Mockup Servicios y Tareas" width="500"/>
+
+### Gestión de usuarios
+
+<img src="./docs/mockups/usuarios.png" alt="Mockup Usuarios" width="500"/>
+
+### Reportes
+
+<img src="./docs/mockups/reportes.png" alt="Mockup Reportes" width="500"/>
+
+## Mockups Móvil
+
+### Inicio de sesión
+
+<img src="./docs/mockups/mobile-login.png" alt="Mockup Login Móvil" width="300"/>
+
+### Gestión de citas
+
+<img src="./docs/mockups/mobile-citas.png" alt="Mockup Citas Móvil" width="300"/>
+
+### Gestión de clientes
+
+<img src="./docs/mockups/mobile-clientes.png" alt="Mockup Clientes Móvil" width="300"/>
+
+---
+
+# Cumplimiento de requerimientos de la Entrega Final
+
+La solución desarrollada contempla los requerimientos establecidos para el proyecto final:
+
+1. **Versión web:** desarrollada con React + Next.js y desplegada en Vercel.
+2. **Versión móvil:** desarrollada con React Native y Firebase integrado.
+3. **Autenticación:** implementación de inicio de sesión mediante correo electrónico y Google.
+4. **Módulos principales y secundarios:** integración de los módulos definidos para la solución.
+5. **Persistencia:** utilización de Cloud Firestore para la gestión de información.
+6. **Diseño UX/UI:** implementación tomando como referencia los mockups desarrollados durante la Etapa 1.
+7. **Mockups:** publicación de los diseños representativos directamente dentro del README.
+8. **Licencia:** incorporación de una licencia Creative Commons al repositorio.
+9. **Repositorio GitHub:** organización del desarrollo mediante ramas y colaboración de los integrantes.
+10. **Desarrollo propio:** solución desarrollada específicamente para la problemática planteada en el proyecto de Grooming Canino.
