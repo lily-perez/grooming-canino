@@ -465,6 +465,12 @@ Los siguientes recursos corresponden al segundo avance de la Etapa 3.
 
 La entrega final corresponde a la integración completa de la solución multiplataforma de **Grooming Canino**, incorporando la versión web desarrollada con React y Next.js, la aplicación móvil desarrollada con React Native y la integración de Firebase.
 
+## Video de defensa final
+
+El video incluye la presentación general del proyecto, la explicación técnica del código de las plataformas web y móvil, y la demostración funcional del sistema.
+
+[Ver video de defensa final en SharePoint](https://udbedu-my.sharepoint.com/:v:/g/personal/pa251527_alumno_udb_edu_sv/IQCN2v8fuUeeS4lmHDWPjmE7Acss2Pm63eV-FZbJUNm7vq8?e=GDWhfo)
+
 ## Versión web
 
 La plataforma web fue desarrollada con **React + Next.js** y se encuentra desplegada públicamente mediante Vercel.
